@@ -200,15 +200,31 @@ export default function DashboardPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-2">
-                    <Button size="sm" className="flex-1 bg-green-500 hover:bg-green-600">
+                  <div className="space-y-2">
+                    <Button size="sm" className="w-full bg-green-500 hover:bg-green-600">
                       <Play className="h-4 w-4 mr-2" />
                       Preview
                     </Button>
-                    <Button size="sm" variant="outline" className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-800">
-                      <Download className="h-4 w-4 mr-2" />
-                      Download
-                    </Button>
+                    <div className="grid grid-cols-1 gap-1">
+                      {beat.audioFiles?.mp3 && (
+                        <Button size="sm" variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800 text-xs">
+                          <Download className="h-3 w-3 mr-1" />
+                          MP3
+                        </Button>
+                      )}
+                      {beat.audioFiles?.wav && (
+                        <Button size="sm" variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800 text-xs">
+                          <Download className="h-3 w-3 mr-1" />
+                          WAV
+                        </Button>
+                      )}
+                      {beat.audioFiles?.stems && (
+                        <Button size="sm" variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800 text-xs">
+                          <Download className="h-3 w-3 mr-1" />
+                          Stems
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </CardContent>

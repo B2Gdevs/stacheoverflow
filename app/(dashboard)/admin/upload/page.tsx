@@ -13,7 +13,8 @@ import {
   FileAudio,
   Save,
   X,
-  Plus
+  Plus,
+  Trash2
 } from 'lucide-react';
 
 export default function BeatUpload() {
@@ -29,11 +30,15 @@ export default function BeatUpload() {
     description: ''
   });
 
-  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [audioFiles, setAudioFiles] = useState({
+    mp3: null as File | null,
+    wav: null as File | null,
+    stems: null as File | null
+  });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  const genres = ['Hip Hop', 'Trap', 'R&B', 'Pop', 'Electronic', 'Rock', 'Jazz'];
+  const genres = ['Hip Hop', 'Trap', 'R&B', 'Pop', 'Electronic', 'Rock'];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -43,11 +48,21 @@ export default function BeatUpload() {
     }));
   };
 
-  const handleAudioFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAudioFileChange = (type: 'mp3' | 'wav' | 'stems', e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setAudioFile(file);
+      setAudioFiles(prev => ({
+        ...prev,
+        [type]: file
+      }));
     }
+  };
+
+  const removeAudioFile = (type: 'mp3' | 'wav' | 'stems') => {
+    setAudioFiles(prev => ({
+      ...prev,
+      [type]: null
+    }));
   };
 
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,6 +70,10 @@ export default function BeatUpload() {
     if (file) {
       setImageFile(file);
     }
+  };
+
+  const removeImageFile = () => {
+    setImageFile(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -76,8 +95,12 @@ export default function BeatUpload() {
           bpm: formData.bpm ? parseInt(formData.bpm) : null,
           key: formData.key || null,
           description: formData.description || null,
-          audioFile: audioFile ? audioFile.name : null,
-          imageFile: imageFile ? imageFile.name : null
+          audioFiles: {
+            mp3: audioFiles.mp3?.name || null,
+            wav: audioFiles.wav?.name || null,
+            stems: audioFiles.stems?.name || null
+          },
+          imageFile: imageFile?.name || null
         }),
       });
 
@@ -96,7 +119,7 @@ export default function BeatUpload() {
         key: '',
         description: ''
       });
-      setAudioFile(null);
+      setAudioFiles({ mp3: null, wav: null, stems: null });
       setImageFile(null);
       
       alert('Beat uploaded successfully!');
@@ -273,43 +296,145 @@ export default function BeatUpload() {
 
         {/* File Upload */}
         <div className="space-y-6">
-          {/* Audio File Upload */}
+          {/* Audio Files Upload */}
           <Card className="bg-gray-900 border-gray-700">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <FileAudio className="h-5 w-5 text-green-500" />
-                Audio File
+                Audio Files
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center">
-                  {audioFile ? (
+            <CardContent className="space-y-4">
+              {/* MP3 File */}
+              <div>
+                <Label className="text-gray-300 text-sm">Full Song MP3</Label>
+                <div className="border-2 border-dashed border-gray-600 rounded-lg p-4 text-center mt-2">
+                  {audioFiles.mp3 ? (
                     <div className="space-y-2">
-                      <FileAudio className="h-8 w-8 text-green-500 mx-auto" />
-                      <p className="text-white text-sm">{audioFile.name}</p>
-                      <p className="text-gray-400 text-xs">{(audioFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                      <FileAudio className="h-6 w-6 text-green-500 mx-auto" />
+                      <p className="text-white text-sm">{audioFiles.mp3.name}</p>
+                      <p className="text-gray-400 text-xs">{(audioFiles.mp3.size / 1024 / 1024).toFixed(2)} MB</p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => removeAudioFile('mp3')}
+                        className="border-red-600 text-red-400 hover:bg-red-900"
+                      >
+                        <Trash2 className="h-3 w-3 mr-1" />
+                        Remove
+                      </Button>
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <FileAudio className="h-8 w-8 text-gray-400 mx-auto" />
-                      <p className="text-gray-400 text-sm">No audio file selected</p>
+                      <FileAudio className="h-6 w-6 text-gray-400 mx-auto" />
+                      <p className="text-gray-400 text-sm">No MP3 file</p>
                     </div>
                   )}
                 </div>
                 <input
                   type="file"
-                  accept="audio/*"
-                  onChange={handleAudioFileChange}
+                  accept=".mp3,audio/mpeg"
+                  onChange={(e) => handleAudioFileChange('mp3', e)}
                   className="hidden"
-                  id="audio-upload"
+                  id="mp3-upload"
                 />
-                <Label htmlFor="audio-upload" className="cursor-pointer">
-                  <Button variant="outline" className="w-full border-gray-600 text-gray-300 hover:bg-gray-800">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Select Audio File
-                  </Button>
-                </Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full mt-2 border-gray-600 text-gray-300 hover:bg-gray-800"
+                  onClick={() => document.getElementById('mp3-upload')?.click()}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Select MP3 File
+                </Button>
+              </div>
+
+              {/* WAV File */}
+              <div>
+                <Label className="text-gray-300 text-sm">Full Song WAV</Label>
+                <div className="border-2 border-dashed border-gray-600 rounded-lg p-4 text-center mt-2">
+                  {audioFiles.wav ? (
+                    <div className="space-y-2">
+                      <FileAudio className="h-6 w-6 text-green-500 mx-auto" />
+                      <p className="text-white text-sm">{audioFiles.wav.name}</p>
+                      <p className="text-gray-400 text-xs">{(audioFiles.wav.size / 1024 / 1024).toFixed(2)} MB</p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => removeAudioFile('wav')}
+                        className="border-red-600 text-red-400 hover:bg-red-900"
+                      >
+                        <Trash2 className="h-3 w-3 mr-1" />
+                        Remove
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <FileAudio className="h-6 w-6 text-gray-400 mx-auto" />
+                      <p className="text-gray-400 text-sm">No WAV file</p>
+                    </div>
+                  )}
+                </div>
+                <input
+                  type="file"
+                  accept=".wav,audio/wav"
+                  onChange={(e) => handleAudioFileChange('wav', e)}
+                  className="hidden"
+                  id="wav-upload"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full mt-2 border-gray-600 text-gray-300 hover:bg-gray-800"
+                  onClick={() => document.getElementById('wav-upload')?.click()}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Select WAV File
+                </Button>
+              </div>
+
+              {/* Stems File */}
+              <div>
+                <Label className="text-gray-300 text-sm">WAV Stems</Label>
+                <div className="border-2 border-dashed border-gray-600 rounded-lg p-4 text-center mt-2">
+                  {audioFiles.stems ? (
+                    <div className="space-y-2">
+                      <FileAudio className="h-6 w-6 text-green-500 mx-auto" />
+                      <p className="text-white text-sm">{audioFiles.stems.name}</p>
+                      <p className="text-gray-400 text-xs">{(audioFiles.stems.size / 1024 / 1024).toFixed(2)} MB</p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => removeAudioFile('stems')}
+                        className="border-red-600 text-red-400 hover:bg-red-900"
+                      >
+                        <Trash2 className="h-3 w-3 mr-1" />
+                        Remove
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <FileAudio className="h-6 w-6 text-gray-400 mx-auto" />
+                      <p className="text-gray-400 text-sm">No stems file</p>
+                    </div>
+                  )}
+                </div>
+                <input
+                  type="file"
+                  accept=".wav,audio/wav"
+                  onChange={(e) => handleAudioFileChange('stems', e)}
+                  className="hidden"
+                  id="stems-upload"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full mt-2 border-gray-600 text-gray-300 hover:bg-gray-800"
+                  onClick={() => document.getElementById('stems-upload')?.click()}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Select Stems File
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -330,6 +455,15 @@ export default function BeatUpload() {
                       <Image className="h-8 w-8 text-green-500 mx-auto" />
                       <p className="text-white text-sm">{imageFile.name}</p>
                       <p className="text-gray-400 text-xs">{(imageFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={removeImageFile}
+                        className="border-red-600 text-red-400 hover:bg-red-900"
+                      >
+                        <Trash2 className="h-3 w-3 mr-1" />
+                        Remove
+                      </Button>
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -345,12 +479,15 @@ export default function BeatUpload() {
                   className="hidden"
                   id="image-upload"
                 />
-                <Label htmlFor="image-upload" className="cursor-pointer">
-                  <Button variant="outline" className="w-full border-gray-600 text-gray-300 hover:bg-gray-800">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Select Cover Image
-                  </Button>
-                </Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full border-gray-600 text-gray-300 hover:bg-gray-800"
+                  onClick={() => document.getElementById('image-upload')?.click()}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Select Cover Image
+                </Button>
               </div>
             </CardContent>
           </Card>

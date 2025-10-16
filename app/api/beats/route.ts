@@ -24,7 +24,11 @@ export async function GET() {
       key: beat.key,
       description: beat.description,
       imageFile: beat.imageFile,
-      audioFile: beat.audioFile,
+      audioFiles: {
+        mp3: beat.audioFileMp3,
+        wav: beat.audioFileWav,
+        stems: beat.audioFileStems
+      },
       createdAt: beat.createdAt,
       updatedAt: beat.updatedAt
     }));
@@ -60,7 +64,7 @@ export async function POST(request: Request) {
       bpm,
       key,
       description,
-      audioFile,
+      audioFiles,
       imageFile
     } = body;
 
@@ -81,7 +85,9 @@ export async function POST(request: Request) {
       bpm: bpm || null,
       key: key || null,
       description: description || null,
-      audioFile: audioFile || null,
+      audioFileMp3: audioFiles?.mp3 || null,
+      audioFileWav: audioFiles?.wav || null,
+      audioFileStems: audioFiles?.stems || null,
       imageFile: imageFile || null,
       uploadedBy: user.id,
       isActive: 1

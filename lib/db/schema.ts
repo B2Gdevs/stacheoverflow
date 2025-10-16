@@ -137,7 +137,10 @@ export const beats = pgTable('beats', {
   duration: varchar('duration', { length: 10 }),
   bpm: integer('bpm'),
   key: varchar('key', { length: 20 }),
-  audioFile: text('audio_file'), // URL or path to audio file
+  // Audio files - multiple versions
+  audioFileMp3: text('audio_file_mp3'), // Full song MP3
+  audioFileWav: text('audio_file_wav'), // Full song WAV
+  audioFileStems: text('audio_file_stems'), // WAV stems
   imageFile: text('image_file'), // URL or path to cover image
   description: text('description'),
   isActive: integer('is_active').notNull().default(1), // 1 for active, 0 for inactive
