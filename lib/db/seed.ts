@@ -50,12 +50,13 @@ async function seed() {
       {
         email: email,
         passwordHash: passwordHash,
-        role: "owner",
+        role: "admin",
+        name: "Admin User",
       },
     ])
     .returning();
 
-  console.log('Initial user created.');
+  console.log('Initial admin user created.');
 
   const [team] = await db
     .insert(teams)

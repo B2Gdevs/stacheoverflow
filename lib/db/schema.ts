@@ -128,6 +128,29 @@ export type TeamDataWithMembers = Team & {
   })[];
 };
 
+export const beats = pgTable('beats', {
+  id: serial('id').primaryKey(),
+  title: varchar('title', { length: 255 }).notNull(),
+  artist: varchar('artist', { length: 255 }).notNull(),
+  genre: varchar('genre', { length: 50 }).notNull(),
+  price: integer('price').notNull(), // Price in cents
+  duration: varchar('duration', { length: 10 }),
+  bpm: integer('bpm'),
+  key: varchar('key', { length: 20 }),
+  audioFile: text('audio_file'), // URL or path to audio file
+  imageFile: text('image_file'), // URL or path to cover image
+  description: text('description'),
+  isActive: integer('is_active').notNull().default(1), // 1 for active, 0 for inactive
+  uploadedBy: integer('uploaded_by')
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export type Beat = typeof beats.$inferSelect;
+export type NewBeat = typeof beats.$inferInsert;
+
 export enum ActivityType {
   SIGN_UP = 'SIGN_UP',
   SIGN_IN = 'SIGN_IN',
@@ -139,4 +162,9 @@ export enum ActivityType {
   REMOVE_TEAM_MEMBER = 'REMOVE_TEAM_MEMBER',
   INVITE_TEAM_MEMBER = 'INVITE_TEAM_MEMBER',
   ACCEPT_INVITATION = 'ACCEPT_INVITATION',
+  UPLOAD_BEAT = 'UPLOAD_BEAT',
+  UPDATE_BEAT = 'UPDATE_BEAT',
+  DELETE_BEAT = 'DELETE_BEAT',
+  PROMOTE_USER = 'PROMOTE_USER',
+  DEMOTE_USER = 'DEMOTE_USER',
 }

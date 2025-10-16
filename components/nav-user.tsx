@@ -9,6 +9,9 @@ import {
   CreditCard,
   LogOut,
   Sparkles,
+  Shield,
+  LogIn,
+  UserPlus,
 } from "lucide-react"
 
 import {
@@ -48,7 +51,7 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar()
   const router = useRouter()
-  const { data: currentUser } = useSWR<User>('/api/user', fetcher)
+  const { data: currentUser, error } = useSWR<User>('/api/user', fetcher)
 
   async function handleSignOut() {
     await signOut()
@@ -56,8 +59,10 @@ export function NavUser({
     router.push('/')
   }
 
-  // Use current user data if available, otherwise fall back to prop
-  const displayUser = currentUser || user
+  // Check if user is authenticated
+  const isAuthenticated = currentUser && !error
+  const displayUser = isAuthenticated ? currentUser : user
+  const isGuest = !isAuthenticated
 
   return (
     <SidebarMenu>
@@ -71,14 +76,19 @@ export function NavUser({
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={displayUser.avatar} alt={displayUser.name} />
                 <AvatarFallback className="rounded-lg">
-                  {displayUser.email
+                  {isGuest ? 'G' : displayUser.email
                     .split(' ')
                     .map((n) => n[0])
                     .join('')}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{displayUser.name}</span>
+                <div className="flex items-center gap-2">
+                  <span className="truncate font-medium">{displayUser.name}</span>
+                  {isAuthenticated && displayUser.role === 'admin' && (
+                    <Shield className="h-3 w-3 text-green-500" />
+                  )}
+                </div>
                 <span className="truncate text-xs">{displayUser.email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
@@ -95,42 +105,62 @@ export function NavUser({
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={displayUser.avatar} alt={displayUser.name} />
                   <AvatarFallback className="rounded-lg">
-                    {displayUser.email
+                    {isGuest ? 'G' : displayUser.email
                       .split(' ')
                       .map((n) => n[0])
                       .join('')}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{displayUser.name}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="truncate font-medium">{displayUser.name}</span>
+                    {isAuthenticated && displayUser.role === 'admin' && (
+                      <Shield className="h-3 w-3 text-green-500" />
+                    )}
+                  </div>
                   <span className="truncate text-xs">{displayUser.email}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell />
-                Notifications
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <form action={handleSignOut} className="w-full">
-              <button type="submit" className="flex w-full">
-                <DropdownMenuItem className="w-full flex-1 cursor-pointer">
-                  <LogOut />
-                  Log out
+            {isGuest ? (
+              <DropdownMenuGroup>
+                <DropdownMenuItem onClick={() => router.push('/sign-in')}>
+                  <LogIn />
+                  Sign In
                 </DropdownMenuItem>
-              </button>
-            </form>
+                <DropdownMenuItem onClick={() => router.push('/sign-up')}>
+                  <UserPlus />
+                  Sign Up
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            ) : (
+              <>
+                <DropdownMenuGroup>
+                  <DropdownMenuItem>
+                    <BadgeCheck />
+                    Account
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <CreditCard />
+                    Billing
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Bell />
+                    Notifications
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <form action={handleSignOut} className="w-full">
+                  <button type="submit" className="flex w-full">
+                    <DropdownMenuItem className="w-full flex-1 cursor-pointer">
+                      <LogOut />
+                      Log out
+                    </DropdownMenuItem>
+                  </button>
+                </form>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>

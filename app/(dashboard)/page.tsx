@@ -22,7 +22,7 @@ export default function HomePage() {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="text-lg rounded-full"
+                    className="text-lg rounded-full border-gray-600 text-white hover:bg-gray-800"
                   >
                     Browse Beats
                     <ArrowRight className="ml-2 h-5 w-5" />
