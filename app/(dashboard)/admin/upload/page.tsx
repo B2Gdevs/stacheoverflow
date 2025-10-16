@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +17,7 @@ import {
 } from 'lucide-react';
 
 export default function BeatUpload() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     title: '',
     artist: 'StachO',
@@ -59,25 +61,54 @@ export default function BeatUpload() {
     e.preventDefault();
     setIsUploading(true);
     
-    // Simulate upload process
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Reset form
-    setFormData({
-      title: '',
-      artist: 'StachO',
-      genre: 'Hip Hop',
-      price: '',
-      duration: '',
-      bpm: '',
-      key: '',
-      description: ''
-    });
-    setAudioFile(null);
-    setImageFile(null);
-    setIsUploading(false);
-    
-    alert('Beat uploaded successfully!');
+    try {
+      const response = await fetch('/api/beats', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: formData.title,
+          artist: formData.artist,
+          genre: formData.genre,
+          price: parseFloat(formData.price),
+          duration: formData.duration || null,
+          bpm: formData.bpm ? parseInt(formData.bpm) : null,
+          key: formData.key || null,
+          description: formData.description || null,
+          audioFile: audioFile ? audioFile.name : null,
+          imageFile: imageFile ? imageFile.name : null
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload beat');
+      }
+
+      // Reset form
+      setFormData({
+        title: '',
+        artist: 'StachO',
+        genre: 'Hip Hop',
+        price: '',
+        duration: '',
+        bpm: '',
+        key: '',
+        description: ''
+      });
+      setAudioFile(null);
+      setImageFile(null);
+      
+      alert('Beat uploaded successfully!');
+      
+      // Redirect to dashboard to see the new beat
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Error uploading beat:', error);
+      alert('Failed to upload beat. Please try again.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
