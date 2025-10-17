@@ -4,7 +4,7 @@ import { downloadFile } from '@/lib/storage';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
   try {
     // Check if user is authenticated (basic authentication check)
@@ -16,7 +16,8 @@ export async function GET(
       );
     }
 
-    const filePath = params.path.join('/');
+    const resolvedParams = await params;
+    const filePath = resolvedParams.path.join('/');
     
     // Security check - only allow audio and image files
     if (!filePath.match(/\.(mp3|wav|jpg|jpeg|png|gif)$/i)) {

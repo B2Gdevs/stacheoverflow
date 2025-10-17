@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Play, Heart, ShoppingCart, Search, Filter, Download, User, Upload, Music, Trash2 } from 'lucide-react';
+import { Play, Heart, ShoppingCart, Search, Filter, Download, User, Upload, Music, Trash2, Edit } from 'lucide-react';
 import useSWR from 'swr';
 import { useRouter } from 'next/navigation';
 
@@ -277,17 +277,28 @@ export default function DashboardPage() {
                       )}
                     </div>
                     
-                    {/* Admin Delete Button */}
+                    {/* Admin Actions */}
                     {currentUser?.role === 'admin' && (
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="border-red-600 text-red-400 hover:bg-red-900/20 text-xs mt-2"
-                        onClick={() => handleDeleteBeat(beat.id)}
-                      >
-                        <Trash2 className="h-3 w-3 mr-1" />
-                        Delete Beat
-                      </Button>
+                      <div className="flex gap-2 mt-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="border-green-600 text-green-400 hover:bg-green-900/20 text-xs flex-1"
+                          onClick={() => router.push(`/admin/edit/${beat.id}`)}
+                        >
+                          <Edit className="h-3 w-3 mr-1" />
+                          Edit
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="border-red-600 text-red-400 hover:bg-red-900/20 text-xs flex-1"
+                          onClick={() => handleDeleteBeat(beat.id)}
+                        >
+                          <Trash2 className="h-3 w-3 mr-1" />
+                          Delete
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </div>
