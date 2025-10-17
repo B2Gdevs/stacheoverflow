@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Play, Heart, ShoppingCart, Search, Filter, Download, User, Upload, Music } from 'lucide-react';
+import { Play, Heart, ShoppingCart, Search, Filter, Download, User, Upload, Music, Trash2 } from 'lucide-react';
 import useSWR from 'swr';
 import { useRouter } from 'next/navigation';
 
@@ -19,8 +19,11 @@ export default function DashboardPage() {
   const [favorites, setFavorites] = useState<number[]>([]);
 
   // Fetch beats from the database
-  const { data: beatsData, error, isLoading } = useSWR('/api/beats', fetcher);
+  const { data: beatsData, error, isLoading, mutate } = useSWR('/api/beats', fetcher);
   const beats = beatsData?.beats || [];
+  
+  // Fetch current user to check if admin
+  const { data: currentUser } = useSWR('/api/user', fetcher);
 
   const filteredBeats = beats.filter((beat: any) => {
     const matchesSearch = beat.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -35,6 +38,29 @@ export default function DashboardPage() {
         ? prev.filter(id => id !== beatId)
         : [...prev, beatId]
     );
+  };
+
+  const handleDeleteBeat = async (beatId: number) => {
+    if (!confirm('Are you sure you want to delete this beat? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/beats?id=${beatId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete beat');
+      }
+
+      // Refresh the beats list
+      mutate();
+      alert('Beat deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting beat:', error);
+      alert('Failed to delete beat. Please try again.');
+    }
   };
 
   // Show loading state
@@ -158,7 +184,15 @@ export default function DashboardPage() {
               <CardContent className="p-0">
                 {/* Beat Image */}
                 <div className="relative aspect-square overflow-hidden rounded-t-lg bg-gray-800">
-                  <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 to-amber-600/20" />
+                  {beat.imageFile ? (
+                    <img 
+                      src={`/api/files/${beat.imageFile}`} 
+                      alt={beat.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 to-amber-600/20" />
+                  )}
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                       <Play className="h-6 w-6 text-gray-900 ml-1" />
@@ -189,7 +223,14 @@ export default function DashboardPage() {
                       <h3 className="font-semibold text-lg text-white">{beat.title}</h3>
                       <p className="text-sm text-gray-300">{beat.artist}</p>
                     </div>
-                    <span className="text-sm font-medium text-green-500">${beat.price}</span>
+                    <div className="text-right">
+                      <span className="text-sm font-medium text-green-500">${beat.price}</span>
+                      <div className="mt-1">
+                        <span className="bg-gray-700 text-gray-300 px-2 py-1 rounded text-xs">
+                          {beat.genre}
+                        </span>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Beat Details */}
@@ -199,32 +240,55 @@ export default function DashboardPage() {
                     <span>{beat.key || 'N/A'}</span>
                   </div>
 
+                  {/* Audio Player */}
+                  {beat.audioFiles?.mp3 && (
+                    <div className="mb-4">
+                      <audio 
+                        controls 
+                        className="w-full h-10 bg-gray-800 rounded-lg"
+                        preload="metadata"
+                      >
+                        <source src={`/api/files/${beat.audioFiles.mp3}`} type="audio/mpeg" />
+                        Your browser does not support the audio element.
+                      </audio>
+                    </div>
+                  )}
+
                   {/* Actions */}
                   <div className="space-y-2">
-                    <Button size="sm" className="w-full bg-green-500 hover:bg-green-600">
-                      <Play className="h-4 w-4 mr-2" />
-                      Preview
-                    </Button>
                     <div className="grid grid-cols-1 gap-1">
                       {beat.audioFiles?.mp3 && (
                         <Button size="sm" variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800 text-xs">
                           <Download className="h-3 w-3 mr-1" />
-                          MP3
+                          Download MP3
                         </Button>
                       )}
                       {beat.audioFiles?.wav && (
                         <Button size="sm" variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800 text-xs">
                           <Download className="h-3 w-3 mr-1" />
-                          WAV
+                          Download WAV
                         </Button>
                       )}
                       {beat.audioFiles?.stems && (
                         <Button size="sm" variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800 text-xs">
                           <Download className="h-3 w-3 mr-1" />
-                          Stems
+                          Download Stems
                         </Button>
                       )}
                     </div>
+                    
+                    {/* Admin Delete Button */}
+                    {currentUser?.role === 'admin' && (
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="border-red-600 text-red-400 hover:bg-red-900/20 text-xs mt-2"
+                        onClick={() => handleDeleteBeat(beat.id)}
+                      >
+                        <Trash2 className="h-3 w-3 mr-1" />
+                        Delete Beat
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>

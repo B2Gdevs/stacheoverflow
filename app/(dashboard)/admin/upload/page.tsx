@@ -76,11 +76,50 @@ export default function BeatUpload() {
     setImageFile(null);
   };
 
+  const uploadFile = async (file: File, type: string): Promise<string | null> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to upload ${type} file`);
+    }
+    
+    const result = await response.json();
+    return result.fileName;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsUploading(true);
     
     try {
+      // Upload files first
+      const uploadedFiles: { [key: string]: string | null } = {
+        mp3: null,
+        wav: null,
+        stems: null,
+        image: null
+      };
+
+      if (audioFiles.mp3) {
+        uploadedFiles.mp3 = await uploadFile(audioFiles.mp3, 'MP3');
+      }
+      if (audioFiles.wav) {
+        uploadedFiles.wav = await uploadFile(audioFiles.wav, 'WAV');
+      }
+      if (audioFiles.stems) {
+        uploadedFiles.stems = await uploadFile(audioFiles.stems, 'Stems');
+      }
+      if (imageFile) {
+        uploadedFiles.image = await uploadFile(imageFile, 'Image');
+      }
+
+      // Then create the beat record
       const response = await fetch('/api/beats', {
         method: 'POST',
         headers: {
@@ -96,16 +135,16 @@ export default function BeatUpload() {
           key: formData.key || null,
           description: formData.description || null,
           audioFiles: {
-            mp3: audioFiles.mp3?.name || null,
-            wav: audioFiles.wav?.name || null,
-            stems: audioFiles.stems?.name || null
+            mp3: uploadedFiles.mp3,
+            wav: uploadedFiles.wav,
+            stems: uploadedFiles.stems
           },
-          imageFile: imageFile?.name || null
+          imageFile: uploadedFiles.image
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to upload beat');
+        throw new Error('Failed to create beat record');
       }
 
       // Reset form
