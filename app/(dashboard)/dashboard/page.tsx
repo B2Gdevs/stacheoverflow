@@ -225,10 +225,19 @@ export default function DashboardPage() {
                     </div>
                     <div className="text-right">
                       <span className="text-sm font-medium text-green-500">${beat.price}</span>
-                      <div className="mt-1">
+                      <div className="mt-1 flex flex-col gap-1">
                         <span className="bg-gray-700 text-gray-300 px-2 py-1 rounded text-xs">
                           {beat.genre}
                         </span>
+                        {currentUser?.role === 'admin' && (
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            beat.published 
+                              ? 'bg-green-600 text-white' 
+                              : 'bg-yellow-600 text-white'
+                          }`}>
+                            {beat.published ? 'Published' : 'Draft'}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>

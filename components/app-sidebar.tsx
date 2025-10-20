@@ -14,6 +14,8 @@ import {
   CreditCard,
   LogIn,
   UserPlus,
+  Crown,
+  FileText,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -44,6 +46,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       icon: Music,
       isActive: true,
     },
+    {
+      title: "Subscription",
+      url: "/dashboard/subscription",
+      icon: Crown,
+    },
   ]
 
   // Admin navigation items
@@ -62,6 +69,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Users",
       url: "/admin/users",
       icon: Users,
+    },
+    {
+      title: "Subscriptions",
+      url: "/admin/subscriptions",
+      icon: Settings,
+    },
+    {
+      title: "API Logs",
+      url: "/admin/logs",
+      icon: FileText,
     },
     {
       title: "Payments",

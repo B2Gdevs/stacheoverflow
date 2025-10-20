@@ -144,6 +144,7 @@ export const beats = pgTable('beats', {
   imageFile: text('image_file'), // URL or path to cover image
   description: text('description'),
   isActive: integer('is_active').notNull().default(1), // 1 for active, 0 for inactive
+  published: integer('published').notNull().default(0), // 1 for published, 0 for draft
   uploadedBy: integer('uploaded_by')
     .notNull()
     .references(() => users.id),
@@ -153,6 +154,70 @@ export const beats = pgTable('beats', {
 
 export type Beat = typeof beats.$inferSelect;
 export type NewBeat = typeof beats.$inferInsert;
+
+// Subscription Plans
+export const subscriptionPlans = pgTable('subscription_plans', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 100 }).notNull(),
+  description: text('description'),
+  price: integer('price').notNull(), // Price in cents per month
+  monthlyDownloads: integer('monthly_downloads').notNull(),
+  stripeProductId: text('stripe_product_id').unique(),
+  stripePriceId: text('stripe_price_id').unique(),
+  isActive: integer('is_active').notNull().default(1),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// User Subscriptions
+export const userSubscriptions = pgTable('user_subscriptions', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.id),
+  planId: integer('plan_id')
+    .notNull()
+    .references(() => subscriptionPlans.id),
+  stripeSubscriptionId: text('stripe_subscription_id').unique(),
+  status: varchar('status', { length: 20 }).notNull().default('active'), // active, canceled, past_due, etc.
+  currentPeriodStart: timestamp('current_period_start').notNull(),
+  currentPeriodEnd: timestamp('current_period_end').notNull(),
+  downloadsUsed: integer('downloads_used').notNull().default(0),
+  downloadsResetAt: timestamp('downloads_reset_at').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// Purchase History (for individual beat purchases)
+export const purchases = pgTable('purchases', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.id),
+  beatId: integer('beat_id')
+    .notNull()
+    .references(() => beats.id),
+  amount: integer('amount').notNull(), // Amount paid in cents
+  stripePaymentIntentId: text('stripe_payment_intent_id'),
+  status: varchar('status', { length: 20 }).notNull().default('completed'), // completed, failed, refunded
+  purchasedAt: timestamp('purchased_at').notNull().defaultNow(),
+});
+
+// Download History
+export const downloads = pgTable('downloads', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.id),
+  beatId: integer('beat_id')
+    .notNull()
+    .references(() => beats.id),
+  fileType: varchar('file_type', { length: 10 }).notNull(), // mp3, wav, stems
+  downloadType: varchar('download_type', { length: 20 }).notNull(), // subscription, purchase
+  subscriptionId: integer('subscription_id').references(() => userSubscriptions.id),
+  purchaseId: integer('purchase_id').references(() => purchases.id),
+  downloadedAt: timestamp('downloaded_at').notNull().defaultNow(),
+});
 
 export enum ActivityType {
   SIGN_UP = 'SIGN_UP',
@@ -170,4 +235,56 @@ export enum ActivityType {
   DELETE_BEAT = 'DELETE_BEAT',
   PROMOTE_USER = 'PROMOTE_USER',
   DEMOTE_USER = 'DEMOTE_USER',
+  SUBSCRIBE = 'SUBSCRIBE',
+  UNSUBSCRIBE = 'UNSUBSCRIBE',
+  PURCHASE_BEAT = 'PURCHASE_BEAT',
+  DOWNLOAD_BEAT = 'DOWNLOAD_BEAT',
 }
+
+// API Request Logs
+export const apiLogs = pgTable('api_logs', {
+  id: serial('id').primaryKey(),
+  eventId: varchar('event_id', { length: 36 }), // UUID for tracing
+  method: varchar('method', { length: 10 }).notNull(), // GET, POST, PUT, DELETE
+  url: text('url').notNull(),
+  endpoint: text('endpoint').notNull(), // The API endpoint path
+  userId: integer('user_id').references(() => users.id),
+  ipAddress: varchar('ip_address', { length: 45 }),
+  userAgent: text('user_agent'),
+  requestPayload: text('request_payload'), // JSON string of request body
+  responseStatus: integer('response_status'),
+  responsePayload: text('response_payload'), // JSON string of response body
+  duration: integer('duration'), // Response time in milliseconds
+  timestamp: timestamp('timestamp').notNull().defaultNow(),
+});
+
+// Stripe Request Logs
+export const stripeLogs = pgTable('stripe_logs', {
+  id: serial('id').primaryKey(),
+  eventId: varchar('event_id', { length: 36 }), // UUID for tracing
+  apiLogId: integer('api_log_id').references(() => apiLogs.id),
+  stripeRequestId: varchar('stripe_request_id', { length: 100 }),
+  stripeEventType: varchar('stripe_event_type', { length: 50 }),
+  stripeObjectType: varchar('stripe_object_type', { length: 50 }),
+  stripeObjectId: varchar('stripe_object_id', { length: 100 }),
+  requestType: varchar('request_type', { length: 50 }).notNull(), // checkout_session, subscription, webhook, etc.
+  requestPayload: text('request_payload'), // JSON string of what we sent to Stripe
+  responsePayload: text('response_payload'), // JSON string of what Stripe returned
+  success: integer('success').notNull().default(1), // 1 for success, 0 for failure
+  errorMessage: text('error_message'),
+  timestamp: timestamp('timestamp').notNull().defaultNow(),
+});
+
+// Type exports
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+export type NewSubscriptionPlan = typeof subscriptionPlans.$inferInsert;
+export type UserSubscription = typeof userSubscriptions.$inferSelect;
+export type NewUserSubscription = typeof userSubscriptions.$inferInsert;
+export type Purchase = typeof purchases.$inferSelect;
+export type NewPurchase = typeof purchases.$inferInsert;
+export type Download = typeof downloads.$inferSelect;
+export type NewDownload = typeof downloads.$inferInsert;
+export type ApiLog = typeof apiLogs.$inferSelect;
+export type NewApiLog = typeof apiLogs.$inferInsert;
+export type StripeLog = typeof stripeLogs.$inferSelect;
+export type NewStripeLog = typeof stripeLogs.$inferInsert;

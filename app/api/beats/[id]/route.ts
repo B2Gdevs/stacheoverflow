@@ -39,6 +39,7 @@ export async function GET(
       bpm: beatData.bpm,
       key: beatData.key,
       description: beatData.description,
+      published: beatData.published === 1,
       audioFiles: {
         mp3: beatData.audioFileMp3,
         wav: beatData.audioFileWav,
@@ -90,6 +91,7 @@ export async function PUT(
       bpm,
       key,
       description,
+      published,
       audioFiles,
       imageFile,
     } = body;
@@ -115,6 +117,7 @@ export async function PUT(
       bpm: bpm ? Number(bpm) : null,
       key: key || null,
       description: description || null,
+      published: published ? 1 : 0,
     };
 
     // Update audio files if provided

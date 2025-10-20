@@ -18,6 +18,7 @@ interface Beat {
   bpm: number | null;
   key: string | null;
   description: string | null;
+  published?: boolean;
   audioFiles: {
     mp3: string | null;
     wav: string | null;
@@ -45,6 +46,7 @@ export default function BeatUploadForm({ mode, initialBeat, onCancel }: BeatUplo
     bpm: '',
     key: '',
     description: '',
+    published: false,
   });
 
   const [audioFiles, setAudioFiles] = useState({
@@ -69,17 +71,20 @@ export default function BeatUploadForm({ mode, initialBeat, onCancel }: BeatUplo
         bpm: initialBeat.bpm?.toString() || '',
         key: initialBeat.key || '',
         description: initialBeat.description || '',
+        published: initialBeat.published || false,
       });
     }
   }, [mode, initialBeat]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'price' || name === 'duration' || name === 'bpm' 
-        ? (value === '' ? '' : Number(value)) 
-        : value
+      [name]: type === 'checkbox' 
+        ? (e.target as HTMLInputElement).checked
+        : name === 'price' || name === 'duration' || name === 'bpm' 
+          ? (value === '' ? '' : Number(value)) 
+          : value
     }));
   };
 
@@ -143,6 +148,7 @@ export default function BeatUploadForm({ mode, initialBeat, onCancel }: BeatUplo
           bpm: formData.bpm ? Number(formData.bpm) : null,
           key: formData.key || null,
           description: formData.description || null,
+          published: formData.published,
           audioFiles: {
             mp3: audioFilePaths.mp3 || null,
             wav: audioFilePaths.wav || null,
@@ -161,6 +167,22 @@ export default function BeatUploadForm({ mode, initialBeat, onCancel }: BeatUplo
 
         if (!response.ok) {
           const errorData = await response.json();
+          
+          // Handle specific error cases
+          if (errorData.code === 'DUPLICATE_FILE') {
+            const existingBeatId = errorData.existingBeatId;
+            const shouldEdit = confirm(
+              `A beat with this file already exists. Would you like to edit the existing beat instead?`
+            );
+            
+            if (shouldEdit && existingBeatId) {
+              router.push(`/admin/edit/${existingBeatId}`);
+              return;
+            } else {
+              throw new Error('Please use a different file or choose a different name.');
+            }
+          }
+          
           throw new Error(errorData.error || 'Failed to create beat');
         }
 
@@ -174,6 +196,7 @@ export default function BeatUploadForm({ mode, initialBeat, onCancel }: BeatUplo
           bpm: formData.bpm ? Number(formData.bpm) : null,
           key: formData.key || null,
           description: formData.description || null,
+          published: formData.published,
         };
 
         // Only include file paths if new files were uploaded
@@ -198,6 +221,12 @@ export default function BeatUploadForm({ mode, initialBeat, onCancel }: BeatUplo
 
         if (!response.ok) {
           const errorData = await response.json();
+          
+          // Handle specific error cases
+          if (errorData.code === 'DUPLICATE_FILE') {
+            throw new Error('A beat with this file already exists. Please use a different file.');
+          }
+          
           throw new Error(errorData.error || 'Failed to update beat');
         }
 
@@ -399,6 +428,20 @@ export default function BeatUploadForm({ mode, initialBeat, onCancel }: BeatUplo
                   className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="Describe the beat..."
                 />
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <input
+                  id="published"
+                  name="published"
+                  type="checkbox"
+                  checked={formData.published}
+                  onChange={handleInputChange}
+                  className="w-4 h-4 text-green-600 bg-gray-800 border-gray-600 rounded focus:ring-green-500 focus:ring-2"
+                />
+                <Label htmlFor="published" className="text-gray-300">
+                  Publish this beat (make it visible to all users)
+                </Label>
               </div>
             </CardContent>
           </Card>
