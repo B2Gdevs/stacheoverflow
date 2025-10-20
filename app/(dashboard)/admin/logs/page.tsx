@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 import useSWR from 'swr';
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
 interface ApiLog {
   id: number;
   eventId: string | null;
@@ -68,18 +70,27 @@ export default function AdminLogsPage() {
 
   const { data: logs, error, mutate, isLoading } = useSWR<CombinedLog[]>(
     `/api/admin/logs?limit=${limit}&offset=${page * limit}`,
+    fetcher,
     {
       onSuccess: (data) => {
-        console.log('Logs fetched successfully:', data?.length || 0, 'logs');
+        console.log('✅ Logs fetched successfully:', data?.length || 0, 'logs');
       },
       onError: (err) => {
-        console.error('Error fetching logs:', err);
+        console.error('❌ Error fetching logs:', err);
       },
       onLoadingSlow: () => {
-        console.log('Logs request is taking a while...');
+        console.log('⏳ Logs request is taking a while...');
       }
     }
   );
+
+  // Debug logging
+  console.log('🔍 SWR Debug:', {
+    isLoading,
+    error: error?.message,
+    data: logs?.length || 0,
+    url: `/api/admin/logs?limit=${limit}&offset=${page * limit}`
+  });
 
 
   const filteredLogs = logs?.filter(log => {
