@@ -303,7 +303,7 @@ export default function BeatUploadForm({ mode, initialBeat, onCancel }: BeatUplo
             <Button
               variant="outline"
               onClick={onCancel}
-              className="border-gray-600 text-gray-300 hover:bg-gray-800"
+              className="bg-black border-white text-white hover:bg-gray-800 hover:border-gray-300"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
@@ -500,7 +500,7 @@ export default function BeatUploadForm({ mode, initialBeat, onCancel }: BeatUplo
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-green-600 hover:bg-green-700 text-white"
+              className="bg-black border-white text-white hover:bg-gray-800 hover:border-gray-300"
             >
               <Save className="w-4 h-4 mr-2" />
               {isSubmitting ? (mode === 'create' ? 'Uploading...' : 'Updating...') : (mode === 'create' ? 'Upload Beat' : 'Update Beat')}
@@ -511,7 +511,7 @@ export default function BeatUploadForm({ mode, initialBeat, onCancel }: BeatUplo
                 type="button"
                 variant="destructive"
                 onClick={handleDelete}
-                className="bg-red-600 hover:bg-red-700"
+                className="bg-black border-white text-white hover:bg-gray-800 hover:border-gray-300"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
                 Delete Beat

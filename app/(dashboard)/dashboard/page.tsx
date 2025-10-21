@@ -120,7 +120,7 @@ export default function DashboardPage() {
               className="pl-10 w-full sm:w-64 bg-gray-800 border-gray-700 text-white placeholder-gray-400"
             />
           </div>
-          <Button variant="outline" className="flex items-center gap-2 border-gray-700 text-gray-300 hover:bg-gray-800">
+          <Button variant="outline" className="flex items-center gap-2 bg-black border-white text-white hover:bg-gray-800 hover:border-gray-300">
             <Filter className="h-4 w-4" />
             Filter
           </Button>
@@ -137,8 +137,8 @@ export default function DashboardPage() {
             onClick={() => setSelectedGenre(genre)}
             className={`rounded-full ${
               selectedGenre === genre 
-                ? "bg-green-500 hover:bg-green-600" 
-                : "border-gray-700 text-gray-300 hover:bg-gray-800"
+                ? "bg-green-500 hover:bg-green-600 text-white" 
+                : "bg-black border-white text-white hover:bg-gray-800 hover:border-gray-300"
             }`}
           >
             {genre}
@@ -267,19 +267,19 @@ export default function DashboardPage() {
                   <div className="space-y-2">
                     <div className="grid grid-cols-1 gap-1">
                       {beat.audioFiles?.mp3 && (
-                        <Button size="sm" variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800 text-xs">
+                        <Button size="sm" variant="outline" className="bg-black border-white text-white hover:bg-gray-800 hover:border-gray-300 text-xs">
                           <Download className="h-3 w-3 mr-1" />
                           Download MP3
                         </Button>
                       )}
                       {beat.audioFiles?.wav && (
-                        <Button size="sm" variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800 text-xs">
+                        <Button size="sm" variant="outline" className="bg-black border-white text-white hover:bg-gray-800 hover:border-gray-300 text-xs">
                           <Download className="h-3 w-3 mr-1" />
                           Download WAV
                         </Button>
                       )}
                       {beat.audioFiles?.stems && (
-                        <Button size="sm" variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800 text-xs">
+                        <Button size="sm" variant="outline" className="bg-black border-white text-white hover:bg-gray-800 hover:border-gray-300 text-xs">
                           <Download className="h-3 w-3 mr-1" />
                           Download Stems
                         </Button>
@@ -292,7 +292,7 @@ export default function DashboardPage() {
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          className="border-green-600 text-green-400 hover:bg-green-900/20 text-xs flex-1"
+                          className="bg-black border-white text-white hover:bg-gray-800 hover:border-gray-300 text-xs flex-1"
                           onClick={() => router.push(`/admin/edit/${beat.id}`)}
                         >
                           <Edit className="h-3 w-3 mr-1" />
@@ -301,7 +301,7 @@ export default function DashboardPage() {
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          className="border-red-600 text-red-400 hover:bg-red-900/20 text-xs flex-1"
+                          className="bg-black border-white text-white hover:bg-gray-800 hover:border-gray-300 text-xs flex-1"
                           onClick={() => handleDeleteBeat(beat.id)}
                         >
                           <Trash2 className="h-3 w-3 mr-1" />

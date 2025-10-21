@@ -115,31 +115,44 @@ export class Logger {
 
   static async getLogsWithStripe(limit: number = 100, offset: number = 0) {
     try {
+      console.log('🔍 Starting getLogsWithStripe with limit:', limit, 'offset:', offset);
+      
       // Get API logs first
+      const apiLogsStart = Date.now();
       const apiLogsResult = await db
         .select()
         .from(apiLogs)
         .orderBy(desc(apiLogs.timestamp))
         .limit(limit)
         .offset(offset);
+      const apiLogsEnd = Date.now();
+      console.log('📊 API logs query took:', apiLogsEnd - apiLogsStart, 'ms, found:', apiLogsResult.length);
 
       // Get Stripe logs for these API logs
+      const stripeLogsStart = Date.now();
       const apiLogIds = apiLogsResult.map(log => log.id);
       const stripeLogsResult = apiLogIds.length > 0 ? await db
         .select()
         .from(stripeLogs)
         .where(inArray(stripeLogs.apiLogId, apiLogIds)) : [];
+      const stripeLogsEnd = Date.now();
+      console.log('📊 Stripe logs query took:', stripeLogsEnd - stripeLogsStart, 'ms, found:', stripeLogsResult.length);
 
       // Combine the results
-      return apiLogsResult.map(apiLog => {
+      const combineStart = Date.now();
+      const result = apiLogsResult.map(apiLog => {
         const stripeLog = stripeLogsResult.find(sl => sl.apiLogId === apiLog.id) || null;
         return {
           apiLog,
           stripeLog
         };
       });
+      const combineEnd = Date.now();
+      console.log('📊 Combining results took:', combineEnd - combineStart, 'ms');
+      
+      return result;
     } catch (error) {
-      console.error('Failed to fetch logs:', error);
+      console.error('❌ Failed to fetch logs:', error);
       return [];
     }
   }

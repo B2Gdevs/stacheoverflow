@@ -201,7 +201,7 @@ export default function AdminSubscriptionsPage() {
           <h1 className="text-3xl font-bold">Subscription Management</h1>
           <Button
             onClick={handleCreate}
-            className="bg-green-600 hover:bg-green-700 text-white"
+            className="bg-black border-white text-white hover:bg-gray-800 hover:border-gray-300"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add New Plan
@@ -276,7 +276,7 @@ export default function AdminSubscriptionsPage() {
                 <div className="flex gap-4">
                   <Button
                     type="submit"
-                    className="bg-green-600 hover:bg-green-700 text-white"
+                    className="bg-black border-white text-white hover:bg-gray-800 hover:border-gray-300"
                   >
                     <Save className="w-4 h-4 mr-2" />
                     {editingPlan ? 'Update Plan' : 'Create Plan'}
@@ -285,7 +285,7 @@ export default function AdminSubscriptionsPage() {
                     type="button"
                     variant="outline"
                     onClick={handleCancel}
-                    className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                    className="bg-black border-white text-white hover:bg-gray-800 hover:border-gray-300"
                   >
                     <X className="w-4 h-4 mr-2" />
                     Cancel
@@ -308,7 +308,7 @@ export default function AdminSubscriptionsPage() {
                       size="sm"
                       variant="outline"
                       onClick={() => handleEdit(plan)}
-                      className="border-green-600 text-green-400 hover:bg-green-900/20"
+                      className="bg-black border-white text-white hover:bg-gray-800 hover:border-gray-300"
                     >
                       <Edit className="w-3 h-3" />
                     </Button>
@@ -316,7 +316,7 @@ export default function AdminSubscriptionsPage() {
                       size="sm"
                       variant="outline"
                       onClick={() => handleDelete(plan.id)}
-                      className="border-red-600 text-red-400 hover:bg-red-900/20"
+                      className="bg-black border-white text-white hover:bg-gray-800 hover:border-gray-300"
                     >
                       <Trash2 className="w-3 h-3" />
                     </Button>

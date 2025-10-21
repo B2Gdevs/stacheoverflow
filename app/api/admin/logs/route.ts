@@ -20,8 +20,10 @@ export async function GET(request: NextRequest) {
 
       console.log('Fetching logs with limit:', limit, 'offset:', offset);
       
+      const startTime = Date.now();
       const logs = await Logger.getLogsWithStripe(limit, offset);
-      console.log('Found logs:', logs.length);
+      const endTime = Date.now();
+      console.log('Found logs:', logs.length, 'in', endTime - startTime, 'ms');
 
       return NextResponse.json(logs);
     } catch (error) {

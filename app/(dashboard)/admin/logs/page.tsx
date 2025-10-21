@@ -9,7 +9,6 @@ import {
   Search, 
   Filter, 
   Download, 
-  Eye, 
   Clock, 
   User, 
   Globe, 
@@ -64,7 +63,6 @@ export default function AdminLogsPage() {
   const [filterMethod, setFilterMethod] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [showStripeOnly, setShowStripeOnly] = useState(false);
-  const [selectedLog, setSelectedLog] = useState<CombinedLog | null>(null);
   const [page, setPage] = useState(0);
   const limit = 50;
 
@@ -89,6 +87,7 @@ export default function AdminLogsPage() {
     isLoading,
     error: error?.message,
     data: logs?.length || 0,
+    logs: logs,
     url: `/api/admin/logs?limit=${limit}&offset=${page * limit}`
   });
 
@@ -97,14 +96,25 @@ export default function AdminLogsPage() {
     const apiLog = log.apiLog;
     const stripeLog = log.stripeLog;
 
-    // Search filter
+    // Search filter - Event ID exact match or fuzzy text search
     if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
+      const searchLower = searchTerm.toLowerCase().trim();
+      
+      // First check for exact Event ID match
+      if (apiLog.eventId && apiLog.eventId.toLowerCase().includes(searchLower)) {
+        return true;
+      }
+      
+      // Then check for fuzzy text matching in various fields
       const matchesSearch = 
         apiLog.endpoint.toLowerCase().includes(searchLower) ||
         apiLog.method.toLowerCase().includes(searchLower) ||
+        apiLog.url.toLowerCase().includes(searchLower) ||
         (apiLog.requestPayload && apiLog.requestPayload.toLowerCase().includes(searchLower)) ||
-        (stripeLog && stripeLog.requestType.toLowerCase().includes(searchLower));
+        (apiLog.responsePayload && apiLog.responsePayload.toLowerCase().includes(searchLower)) ||
+        (stripeLog && stripeLog.requestType.toLowerCase().includes(searchLower)) ||
+        (stripeLog && stripeLog.stripeRequestId && stripeLog.stripeRequestId.toLowerCase().includes(searchLower)) ||
+        (stripeLog && stripeLog.stripeObjectId && stripeLog.stripeObjectId.toLowerCase().includes(searchLower));
       
       if (!matchesSearch) return false;
     }
@@ -177,14 +187,6 @@ export default function AdminLogsPage() {
     return new Date(timestamp).toLocaleString();
   };
 
-  const safeJsonParse = (jsonString: string | null) => {
-    if (!jsonString) return null;
-    try {
-      return JSON.parse(jsonString);
-    } catch {
-      return jsonString;
-    }
-  };
 
   if (error) {
     return (
@@ -226,7 +228,7 @@ export default function AdminLogsPage() {
         <h1 className="text-3xl font-bold mb-8">API & Stripe Logs</h1>
 
         {/* Filters */}
-        <Card className="bg-gray-900 border-gray-700 mb-6">
+        <Card className="bg-gray-800 border-gray-600 mb-6">
           <CardHeader>
             <CardTitle className="text-white">Filters</CardTitle>
           </CardHeader>
@@ -240,8 +242,8 @@ export default function AdminLogsPage() {
                     id="search"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search endpoints, methods..."
-                    className="pl-10 bg-gray-800 border-gray-600 text-white"
+                    placeholder="Search by Event ID, endpoint, method, payload..."
+                    className="pl-10 bg-gray-800 border-gray-600 text-white placeholder-gray-400"
                   />
                 </div>
               </div>
@@ -292,7 +294,7 @@ export default function AdminLogsPage() {
         </Card>
 
         {/* Logs Table */}
-        <Card className="bg-gray-900 border-gray-700">
+        <Card className="bg-gray-800 border-gray-600">
           <CardHeader>
             <CardTitle className="text-white">Request Logs</CardTitle>
           </CardHeader>
@@ -300,21 +302,20 @@ export default function AdminLogsPage() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-700">
-                    <th className="text-left p-3 text-gray-300">Status</th>
-                    <th className="text-left p-3 text-gray-300">Method</th>
-                    <th className="text-left p-3 text-gray-300">Endpoint</th>
-                    <th className="text-left p-3 text-gray-300">Event ID</th>
-                    <th className="text-left p-3 text-gray-300">User</th>
-                    <th className="text-left p-3 text-gray-300">Duration</th>
-                    <th className="text-left p-3 text-gray-300">Stripe</th>
-                    <th className="text-left p-3 text-gray-300">Time</th>
-                    <th className="text-left p-3 text-gray-300">Actions</th>
+                  <tr className="border-b border-gray-600 bg-gray-700">
+                    <th className="text-left p-3 text-white font-semibold">Status</th>
+                    <th className="text-left p-3 text-white font-semibold">Method</th>
+                    <th className="text-left p-3 text-white font-semibold">Endpoint</th>
+                    <th className="text-left p-3 text-white font-semibold">Event ID</th>
+                    <th className="text-left p-3 text-white font-semibold">User</th>
+                    <th className="text-left p-3 text-white font-semibold">Duration</th>
+                    <th className="text-left p-3 text-white font-semibold">Stripe</th>
+                    <th className="text-left p-3 text-white font-semibold">Time</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredLogs?.map((log) => (
-                    <tr key={log.apiLog.id} className="border-b border-gray-800 hover:bg-gray-800/50">
+                    <tr key={log.apiLog.id} className="border-b border-gray-600 hover:bg-gray-700/50">
                       <td className="p-3">
                         <div className="flex items-center gap-2">
                           {getStatusIcon(log.apiLog.responseStatus, log.stripeLog?.success)}
@@ -325,45 +326,49 @@ export default function AdminLogsPage() {
                       </td>
                       <td className="p-3">
                         <span className={`px-2 py-1 rounded text-xs ${
-                          log.apiLog.method === 'GET' ? 'bg-blue-900/20 text-blue-400' :
-                          log.apiLog.method === 'POST' ? 'bg-green-900/20 text-green-400' :
-                          log.apiLog.method === 'PUT' ? 'bg-yellow-900/20 text-yellow-400' :
-                          log.apiLog.method === 'DELETE' ? 'bg-red-900/20 text-red-400' :
-                          'bg-gray-900/20 text-gray-400'
+                          log.apiLog.method === 'GET' ? 'bg-green-900/30 text-green-300' :
+                          log.apiLog.method === 'POST' ? 'bg-amber-900/30 text-amber-300' :
+                          log.apiLog.method === 'PUT' ? 'bg-orange-900/30 text-orange-300' :
+                          log.apiLog.method === 'DELETE' ? 'bg-red-900/30 text-red-300' :
+                          'bg-gray-700 text-gray-300'
                         }`}>
                           {log.apiLog.method}
                         </span>
                       </td>
                       <td className="p-3">
-                        <div className="max-w-xs truncate" title={log.apiLog.endpoint}>
+                        <div className="max-w-xs truncate text-white" title={log.apiLog.endpoint}>
                           {log.apiLog.endpoint}
                         </div>
                       </td>
                       <td className="p-3">
                         {log.apiLog.eventId ? (
-                          <span className="text-xs text-blue-400 font-mono" title={log.apiLog.eventId}>
-                            {log.apiLog.eventId.substring(0, 8)}...
-                          </span>
+                          <button
+                            onClick={() => navigator.clipboard.writeText(log.apiLog.eventId)}
+                            className="text-xs text-green-400 font-mono hover:text-green-300 hover:bg-gray-600 px-2 py-1 rounded transition-colors cursor-pointer"
+                            title={`Click to copy: ${log.apiLog.eventId}`}
+                          >
+                            {log.apiLog.eventId}
+                          </button>
                         ) : (
-                          <span className="text-sm text-gray-500">-</span>
+                          <span className="text-sm text-gray-400">-</span>
                         )}
                       </td>
                       <td className="p-3">
                         {log.apiLog.userId ? (
-                          <span className="text-sm text-gray-300">User {log.apiLog.userId}</span>
+                          <span className="text-sm text-white">User {log.apiLog.userId}</span>
                         ) : (
-                          <span className="text-sm text-gray-500">Anonymous</span>
+                          <span className="text-sm text-gray-400">Anonymous</span>
                         )}
                       </td>
                       <td className="p-3">
-                        <span className="text-sm text-gray-300">
+                        <span className="text-sm text-white">
                           {formatDuration(log.apiLog.duration)}
                         </span>
                       </td>
                       <td className="p-3">
                         {log.stripeLog ? (
                           <div className="flex items-center gap-2">
-                            <span className="text-xs bg-purple-900/20 text-purple-400 px-2 py-1 rounded">
+                            <span className="text-xs bg-amber-900/30 text-amber-300 px-2 py-1 rounded">
                               {log.stripeLog.requestType}
                             </span>
                             {log.stripeLog.success === 1 ? (
@@ -377,20 +382,9 @@ export default function AdminLogsPage() {
                         )}
                       </td>
                       <td className="p-3">
-                        <span className="text-sm text-gray-300">
+                        <span className="text-sm text-white">
                           {formatTimestamp(log.apiLog.timestamp)}
                         </span>
-                      </td>
-                      <td className="p-3">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setSelectedLog(log)}
-                          className="border-gray-600 text-gray-300 hover:bg-gray-800"
-                        >
-                          <Eye className="w-3 h-3 mr-1" />
-                          View
-                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -400,141 +394,12 @@ export default function AdminLogsPage() {
 
             {filteredLogs?.length === 0 && (
               <div className="text-center py-8">
-                <p className="text-gray-400">No logs found matching your criteria</p>
+                <p className="text-gray-300">No logs found matching your criteria</p>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Log Detail Modal */}
-        {selectedLog && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <Card className="bg-gray-900 border-gray-700 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-white">Log Details</CardTitle>
-                  <Button
-                    variant="outline"
-                    onClick={() => setSelectedLog(null)}
-                    className="border-gray-600 text-gray-300 hover:bg-gray-800"
-                  >
-                    Close
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* API Log Details */}
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-3">API Request</h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-400">Method:</span>
-                      <span className="ml-2 text-white">{selectedLog.apiLog.method}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-400">Status:</span>
-                      <span className="ml-2 text-white">{selectedLog.apiLog.responseStatus || 'N/A'}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-400">Duration:</span>
-                      <span className="ml-2 text-white">{formatDuration(selectedLog.apiLog.duration)}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-400">User ID:</span>
-                      <span className="ml-2 text-white">{selectedLog.apiLog.userId || 'Anonymous'}</span>
-                    </div>
-                    <div className="col-span-2">
-                      <span className="text-gray-400">Event ID:</span>
-                      <span className="ml-2 text-white font-mono text-xs">{selectedLog.apiLog.eventId || 'N/A'}</span>
-                    </div>
-                    <div className="col-span-2">
-                      <span className="text-gray-400">URL:</span>
-                      <span className="ml-2 text-white break-all">{selectedLog.apiLog.url}</span>
-                    </div>
-                    <div className="col-span-2">
-                      <span className="text-gray-400">User Agent:</span>
-                      <span className="ml-2 text-white text-xs break-all">{selectedLog.apiLog.userAgent || 'N/A'}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Request Payload */}
-                {selectedLog.apiLog.requestPayload && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-white mb-3">Request Payload</h3>
-                    <pre className="bg-gray-800 p-4 rounded-lg text-sm text-gray-300 overflow-x-auto">
-                      {JSON.stringify(safeJsonParse(selectedLog.apiLog.requestPayload), null, 2)}
-                    </pre>
-                  </div>
-                )}
-
-                {/* Response Payload */}
-                {selectedLog.apiLog.responsePayload && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-white mb-3">Response Payload</h3>
-                    <pre className="bg-gray-800 p-4 rounded-lg text-sm text-gray-300 overflow-x-auto">
-                      {JSON.stringify(safeJsonParse(selectedLog.apiLog.responsePayload), null, 2)}
-                    </pre>
-                  </div>
-                )}
-
-                {/* Stripe Log Details */}
-                {selectedLog.stripeLog && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-white mb-3">Stripe Request</h3>
-                    <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-                      <div>
-                        <span className="text-gray-400">Type:</span>
-                        <span className="ml-2 text-white">{selectedLog.stripeLog.requestType}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">Success:</span>
-                        <span className="ml-2 text-white">{selectedLog.stripeLog.success === 1 ? 'Yes' : 'No'}</span>
-                      </div>
-                      {selectedLog.stripeLog.stripeRequestId && (
-                        <div>
-                          <span className="text-gray-400">Request ID:</span>
-                          <span className="ml-2 text-white">{selectedLog.stripeLog.stripeRequestId}</span>
-                        </div>
-                      )}
-                      {selectedLog.stripeLog.stripeObjectId && (
-                        <div>
-                          <span className="text-gray-400">Object ID:</span>
-                          <span className="ml-2 text-white">{selectedLog.stripeLog.stripeObjectId}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {selectedLog.stripeLog.requestPayload && (
-                      <div className="mb-4">
-                        <h4 className="text-md font-semibold text-white mb-2">Stripe Request Payload</h4>
-                        <pre className="bg-gray-800 p-4 rounded-lg text-sm text-gray-300 overflow-x-auto">
-                          {JSON.stringify(safeJsonParse(selectedLog.stripeLog.requestPayload), null, 2)}
-                        </pre>
-                      </div>
-                    )}
-
-                    {selectedLog.stripeLog.responsePayload && (
-                      <div>
-                        <h4 className="text-md font-semibold text-white mb-2">Stripe Response Payload</h4>
-                        <pre className="bg-gray-800 p-4 rounded-lg text-sm text-gray-300 overflow-x-auto">
-                          {JSON.stringify(safeJsonParse(selectedLog.stripeLog.responsePayload), null, 2)}
-                        </pre>
-                      </div>
-                    )}
-
-                    {selectedLog.stripeLog.errorMessage && (
-                      <div>
-                        <h4 className="text-md font-semibold text-red-400 mb-2">Error Message</h4>
-                        <p className="text-red-400">{selectedLog.stripeLog.errorMessage}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        )}
       </div>
     </div>
   );
