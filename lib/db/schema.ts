@@ -143,17 +143,42 @@ export const beats = pgTable('beats', {
   audioFileStems: text('audio_file_stems'), // WAV stems
   imageFile: text('image_file'), // URL or path to cover image
   description: text('description'),
+  category: varchar('category', { length: 50 }).notNull().default('artist'), // 'artist', 'game', 'commercial', 'film'
+  tags: text('tags').array(), // Array of tag strings
   isActive: integer('is_active').notNull().default(1), // 1 for active, 0 for inactive
   published: integer('published').notNull().default(0), // 1 for published, 0 for draft
   uploadedBy: integer('uploaded_by')
     .notNull()
     .references(() => users.id),
+  isPack: integer('is_pack').notNull().default(0), // 1 for pack, 0 for single beat
+  packId: integer('pack_id').references(() => beatPacks.id), // Reference to pack if this is a pack item
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
 export type Beat = typeof beats.$inferSelect;
 export type NewBeat = typeof beats.$inferInsert;
+
+// Beat Packs
+export const beatPacks = pgTable('beat_packs', {
+  id: serial('id').primaryKey(),
+  title: varchar('title', { length: 255 }).notNull(),
+  artist: varchar('artist', { length: 255 }).notNull(),
+  genre: varchar('genre', { length: 50 }).notNull(),
+  price: integer('price').notNull(), // Price in cents
+  description: text('description'),
+  imageFile: text('image_file'), // URL or path to cover image
+  uploadedBy: integer('uploaded_by')
+    .notNull()
+    .references(() => users.id),
+  isActive: integer('is_active').notNull().default(1), // 1 for active, 0 for inactive
+  published: integer('published').notNull().default(0), // 1 for published, 0 for draft
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export type BeatPack = typeof beatPacks.$inferSelect;
+export type NewBeatPack = typeof beatPacks.$inferInsert;
 
 // Subscription Plans
 export const subscriptionPlans = pgTable('subscription_plans', {

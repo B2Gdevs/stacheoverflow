@@ -32,6 +32,8 @@ export async function GET() {
       bpm: beat.bpm,
       key: beat.key,
       description: beat.description,
+      category: beat.category,
+      tags: beat.tags || [],
       imageFile: beat.imageFile,
       published: beat.published === 1,
       audioFiles: {
@@ -74,6 +76,8 @@ export async function POST(request: Request) {
       bpm,
       key,
       description,
+      category,
+      tags,
       published,
       audioFiles,
       imageFile
@@ -116,6 +120,8 @@ export async function POST(request: Request) {
       bpm: bpm || null,
       key: key || null,
       description: description || null,
+      category: category || 'artist',
+      tags: tags || [],
       published: published ? 1 : 0,
       audioFileMp3: audioFiles?.mp3 || null,
       audioFileWav: audioFiles?.wav || null,

@@ -1,15 +1,20 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import BeatUploadForm from '@/components/beat-upload-form';
+import { BeatUploadWizard } from '@/components/beat-upload-wizard';
 
 export default function UploadBeatPage() {
   const router = useRouter();
 
+  const handleComplete = (result: any) => {
+    console.log('Upload completed:', result);
+    router.push('/dashboard');
+  };
+
   return (
-    <BeatUploadForm 
-      mode="create" 
-      onCancel={() => router.back()} 
+    <BeatUploadWizard 
+      onCancel={() => router.back()}
+      onComplete={handleComplete}
     />
   );
 }
