@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,10 @@ import {
   Package, 
   Check,
   Upload,
-  Save
+  Save,
+  Search,
+  Plus,
+  X
 } from 'lucide-react';
 
 interface BeatUploadWizardProps {
@@ -20,9 +23,10 @@ interface BeatUploadWizardProps {
   onComplete?: (result: any) => void;
 }
 
-type UploadType = 'single' | 'existing-pack';
+type UploadType = 'single' | 'pack';
 
 interface BeatData {
+  id?: number;
   title: string;
   artist: string;
   genre: string;
@@ -31,8 +35,8 @@ interface BeatData {
   bpm: number;
   key: string;
   description: string;
-  category: string; // 'artist', 'game', 'commercial', etc.
-  tags: string[]; // Array of tag strings
+  category: string;
+  tags: string[];
   audioFiles: {
     mp3: File | null;
     wav: File | null;
@@ -51,6 +55,17 @@ interface PackData {
   imageFile: File | null;
   published: boolean;
   selectedBeats: number[];
+}
+
+interface ExistingBeat {
+  id: number;
+  title: string;
+  artist: string;
+  genre: string;
+  price: number;
+  category: string;
+  tags: string[];
+  imageFile: string | null;
 }
 
 export function BeatUploadWizard({ onCancel, onComplete }: BeatUploadWizardProps) {
@@ -84,6 +99,9 @@ export function BeatUploadWizard({ onCancel, onComplete }: BeatUploadWizardProps
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newTag, setNewTag] = useState('');
   const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [existingBeats, setExistingBeats] = useState<ExistingBeat[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredBeats, setFilteredBeats] = useState<ExistingBeat[]>([]);
 
   // Predefined categories and their associated tags
   const categoryTags = {
@@ -93,6 +111,41 @@ export function BeatUploadWizard({ onCancel, onComplete }: BeatUploadWizardProps
     film: ['action', 'drama', 'romance', 'horror', 'comedy', 'suspense', 'emotional', 'cinematic']
   };
 
+  // Fetch existing beats for pack creation
+  useEffect(() => {
+    if (uploadType === 'pack' && currentStep === 2) {
+      fetchExistingBeats();
+    }
+  }, [uploadType, currentStep]);
+
+  // Filter beats based on search query
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const filtered = existingBeats.filter(beat => 
+        beat.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        beat.artist.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        beat.genre.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        beat.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
+      setFilteredBeats(filtered);
+    } else {
+      setFilteredBeats(existingBeats);
+    }
+  }, [searchQuery, existingBeats]);
+
+  const fetchExistingBeats = async () => {
+    try {
+      const response = await fetch('/api/beats');
+      if (response.ok) {
+        const data = await response.json();
+        setExistingBeats(data.beats || []);
+        setFilteredBeats(data.beats || []);
+      }
+    } catch (error) {
+      console.error('Error fetching beats:', error);
+    }
+  };
+
   const getSteps = () => {
     if (uploadType === 'single') {
       return [
@@ -100,7 +153,7 @@ export function BeatUploadWizard({ onCancel, onComplete }: BeatUploadWizardProps
         { id: 'beat-info', title: 'Beat Information', description: 'Enter beat details and upload files' },
         { id: 'review', title: 'Review & Publish', description: 'Review your beat before publishing' }
       ];
-    } else if (uploadType === 'existing-pack') {
+    } else if (uploadType === 'pack') {
       return [
         { id: 'type', title: 'Choose Upload Type', description: 'Select how you want to upload beats' },
         { id: 'pack-info', title: 'Pack Information', description: 'Enter pack details' },
@@ -162,6 +215,15 @@ export function BeatUploadWizard({ onCancel, onComplete }: BeatUploadWizardProps
       addTag(newTag.trim());
       setNewTag('');
     }
+  };
+
+  const toggleBeatSelection = (beatId: number) => {
+    setPackData(prev => ({
+      ...prev,
+      selectedBeats: prev.selectedBeats.includes(beatId)
+        ? prev.selectedBeats.filter(id => id !== beatId)
+        : [...prev.selectedBeats, beatId]
+    }));
   };
 
   const handleSubmit = async () => {
@@ -233,7 +295,7 @@ export function BeatUploadWizard({ onCancel, onComplete }: BeatUploadWizardProps
 
               <Card 
                 className="bg-slate-900 border-2 border-slate-700 cursor-pointer hover:border-amber-600 hover:bg-slate-800 transition-all duration-200 group"
-                onClick={() => handleUploadTypeSelect('existing-pack')}
+                onClick={() => handleUploadTypeSelect('pack')}
               >
                 <CardContent className="p-8 text-center">
                   <div className="w-20 h-20 bg-amber-900/20 rounded-xl flex items-center justify-center mx-auto mb-6 group-hover:bg-amber-800/30 transition-colors">
@@ -326,18 +388,18 @@ export function BeatUploadWizard({ onCancel, onComplete }: BeatUploadWizardProps
                         placeholder="3:45"
                       />
                     </div>
-                     <div>
-                       <Label htmlFor="beat-price" className="text-slate-300 font-medium">Price ($)</Label>
-                       <Input
-                         id="beat-price"
-                         type="number"
-                         step="0.01"
-                         value={currentBeat.price}
-                         onChange={(e) => handleBeatChange('price', parseFloat(e.target.value) || 0)}
-                         className="bg-slate-800 border-slate-600 text-white focus:border-amber-500 focus:ring-amber-500/20"
-                         placeholder="20.00"
-                       />
-                     </div>
+                    <div>
+                      <Label htmlFor="beat-price" className="text-slate-300 font-medium">Price ($)</Label>
+                      <Input
+                        id="beat-price"
+                        type="number"
+                        step="0.01"
+                        value={currentBeat.price}
+                        onChange={(e) => handleBeatChange('price', parseFloat(e.target.value) || 0)}
+                        className="bg-slate-800 border-slate-600 text-white focus:border-amber-500 focus:ring-amber-500/20"
+                        placeholder="20.00"
+                      />
+                    </div>
                   </div>
 
                   <div>
@@ -536,14 +598,15 @@ export function BeatUploadWizard({ onCancel, onComplete }: BeatUploadWizardProps
                       />
                     </div>
                     <div>
-                      <Label htmlFor="pack-price" className="text-slate-300 font-medium">Price (cents)</Label>
+                      <Label htmlFor="pack-price" className="text-slate-300 font-medium">Price ($)</Label>
                       <Input
                         id="pack-price"
                         type="number"
+                        step="0.01"
                         value={packData.price}
-                        onChange={(e) => handlePackInfoChange('price', parseInt(e.target.value) || 0)}
+                        onChange={(e) => handlePackInfoChange('price', parseFloat(e.target.value) || 0)}
                         className="bg-slate-800 border-slate-600 text-white focus:border-amber-500 focus:ring-amber-500/20"
-                        placeholder="5000"
+                        placeholder="50.00"
                       />
                     </div>
                   </div>
@@ -588,7 +651,6 @@ export function BeatUploadWizard({ onCancel, onComplete }: BeatUploadWizardProps
             </div>
           );
         }
-        break;
 
       case 2:
         if (uploadType === 'single') {
@@ -617,10 +679,10 @@ export function BeatUploadWizard({ onCancel, onComplete }: BeatUploadWizardProps
                       <span className="text-slate-400">Genre:</span>
                       <span className="ml-2 text-white">{currentBeat.genre}</span>
                     </div>
-                     <div>
-                       <span className="text-slate-400">Price:</span>
-                       <span className="ml-2 text-white">${currentBeat.price.toFixed(2)}</span>
-                     </div>
+                    <div>
+                      <span className="text-slate-400">Price:</span>
+                      <span className="ml-2 text-white">${currentBeat.price.toFixed(2)}</span>
+                    </div>
                     <div>
                       <span className="text-slate-400">BPM:</span>
                       <span className="ml-2 text-white">{currentBeat.bpm}</span>
@@ -629,30 +691,30 @@ export function BeatUploadWizard({ onCancel, onComplete }: BeatUploadWizardProps
                       <span className="text-slate-400">Key:</span>
                       <span className="ml-2 text-white">{currentBeat.key}</span>
                     </div>
-                     <div>
-                       <span className="text-slate-400">Category:</span>
-                       <span className="ml-2 text-white capitalize">{currentBeat.category}</span>
-                     </div>
-                     <div>
-                       <span className="text-slate-400">Status:</span>
-                       <span className="ml-2 text-white">{currentBeat.published ? 'Published' : 'Draft'}</span>
-                     </div>
-                   </div>
-                   {currentBeat.tags.length > 0 && (
-                     <div className="mt-4">
-                       <span className="text-slate-400 text-sm">Tags:</span>
-                       <div className="flex flex-wrap gap-2 mt-2">
-                         {currentBeat.tags.map(tag => (
-                           <span
-                             key={tag}
-                             className="px-2 py-1 bg-amber-600 text-white text-xs rounded-md"
-                           >
-                             {tag}
-                           </span>
-                         ))}
-                       </div>
-                     </div>
-                   )}
+                    <div>
+                      <span className="text-slate-400">Category:</span>
+                      <span className="ml-2 text-white capitalize">{currentBeat.category}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400">Status:</span>
+                      <span className="ml-2 text-white">{currentBeat.published ? 'Published' : 'Draft'}</span>
+                    </div>
+                  </div>
+                  {currentBeat.tags.length > 0 && (
+                    <div className="mt-4">
+                      <span className="text-slate-400 text-sm">Tags:</span>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {currentBeat.tags.map(tag => (
+                          <span
+                            key={tag}
+                            className="px-2 py-1 bg-amber-600 text-white text-xs rounded-md"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -666,18 +728,79 @@ export function BeatUploadWizard({ onCancel, onComplete }: BeatUploadWizardProps
               </div>
 
               <Card className="bg-slate-900 border-2 border-slate-700">
-                <CardContent className="p-8">
-                  <div className="text-center text-slate-400">
-                    <Package className="w-16 h-16 mx-auto mb-4 text-slate-600" />
-                    <p className="text-lg">Beat selection coming soon...</p>
-                    <p className="text-sm">This feature will allow you to select from your existing beats to create packs.</p>
+                <CardContent className="p-8 space-y-6">
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                        <Input
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Search beats by title, artist, genre, or tags..."
+                          className="pl-10 bg-slate-800 border-slate-600 text-white focus:border-amber-500 focus:ring-amber-500/20"
+                        />
+                      </div>
+                    </div>
+                    <div className="text-slate-400 text-sm flex items-center">
+                      {packData.selectedBeats.length} selected
+                    </div>
                   </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+                    {filteredBeats.map(beat => (
+                      <Card
+                        key={beat.id}
+                        className={`cursor-pointer transition-all duration-200 ${
+                          packData.selectedBeats.includes(beat.id)
+                            ? 'bg-amber-900/30 border-amber-500'
+                            : 'bg-slate-800 border-slate-600 hover:border-slate-500'
+                        }`}
+                        onClick={() => toggleBeatSelection(beat.id)}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-white font-medium truncate">{beat.title}</h3>
+                            {packData.selectedBeats.includes(beat.id) && (
+                              <Check className="w-4 h-4 text-amber-400" />
+                            )}
+                          </div>
+                          <p className="text-slate-400 text-sm mb-2">{beat.artist}</p>
+                          <div className="flex items-center justify-between">
+                            <span className="text-amber-400 font-medium">${(beat.price / 100).toFixed(2)}</span>
+                            <span className="text-slate-500 text-xs capitalize">{beat.category}</span>
+                          </div>
+                          {beat.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {beat.tags.slice(0, 2).map(tag => (
+                                <span
+                                  key={tag}
+                                  className="px-2 py-1 bg-slate-700 text-slate-300 text-xs rounded"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                              {beat.tags.length > 2 && (
+                                <span className="text-slate-500 text-xs">+{beat.tags.length - 2}</span>
+                              )}
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  {filteredBeats.length === 0 && (
+                    <div className="text-center text-slate-400 py-8">
+                      <Package className="w-16 h-16 mx-auto mb-4 text-slate-600" />
+                      <p className="text-lg">No beats found</p>
+                      <p className="text-sm">Try adjusting your search terms</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
           );
         }
-        break;
 
       case 3:
         return (
@@ -707,7 +830,7 @@ export function BeatUploadWizard({ onCancel, onComplete }: BeatUploadWizardProps
                   </div>
                   <div>
                     <span className="text-slate-400">Price:</span>
-                    <span className="ml-2 text-white">${(packData.price / 100).toFixed(2)}</span>
+                    <span className="ml-2 text-white">${packData.price.toFixed(2)}</span>
                   </div>
                   <div>
                     <span className="text-slate-400">Beats:</span>
@@ -718,6 +841,26 @@ export function BeatUploadWizard({ onCancel, onComplete }: BeatUploadWizardProps
                     <span className="ml-2 text-white">{packData.published ? 'Published' : 'Draft'}</span>
                   </div>
                 </div>
+
+                {packData.selectedBeats.length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="text-white font-semibold mb-2">Selected Beats:</h4>
+                    <div className="space-y-2">
+                      {packData.selectedBeats.map(beatId => {
+                        const beat = existingBeats.find(b => b.id === beatId);
+                        return beat ? (
+                          <div key={beatId} className="flex items-center justify-between bg-slate-800 p-3 rounded">
+                            <div>
+                              <span className="text-white font-medium">{beat.title}</span>
+                              <span className="text-slate-400 ml-2">- {beat.artist}</span>
+                            </div>
+                            <span className="text-amber-400">${(beat.price / 100).toFixed(2)}</span>
+                          </div>
+                        ) : null;
+                      })}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -817,7 +960,8 @@ export function BeatUploadWizard({ onCancel, onComplete }: BeatUploadWizardProps
                 disabled={
                   (currentStep === 0 && !uploadType) ||
                   (currentStep === 1 && uploadType === 'single' && (!currentBeat.title || !currentBeat.audioFiles.mp3)) ||
-                  (currentStep === 1 && uploadType === 'existing-pack' && (!packData.title || !packData.artist))
+                  (currentStep === 1 && uploadType === 'pack' && (!packData.title || !packData.artist)) ||
+                  (currentStep === 2 && uploadType === 'pack' && packData.selectedBeats.length === 0)
                 }
               >
                 Next

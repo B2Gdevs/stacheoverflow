@@ -26,6 +26,10 @@ interface Beat {
   };
   imageFile: string | null;
   createdAt?: string;
+  // Pack-specific fields
+  isPack?: boolean;
+  packId?: number;
+  beats?: any[];
 }
 
 interface BeatUploadFormProps {
@@ -211,7 +215,12 @@ export default function BeatUploadForm({ mode, initialBeat, onCancel }: BeatUplo
           updateData.imageFile = imageFilePath;
         }
 
-        const response = await fetch(`/api/beats/${initialBeat?.id}`, {
+        // Use different API endpoint for packs vs individual beats
+        const apiEndpoint = initialBeat?.isPack 
+          ? `/api/beat-packs/${initialBeat?.id}`
+          : `/api/beats/${initialBeat?.id}`;
+
+        const response = await fetch(apiEndpoint, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -242,22 +251,28 @@ export default function BeatUploadForm({ mode, initialBeat, onCancel }: BeatUplo
   const handleDelete = async () => {
     if (mode !== 'edit' || !initialBeat?.id) return;
     
-    if (!confirm('Are you sure you want to delete this beat? This action cannot be undone.')) {
+    const itemType = initialBeat?.isPack ? 'pack' : 'beat';
+    if (!confirm(`Are you sure you want to delete this ${itemType}? This action cannot be undone.`)) {
       return;
     }
 
     try {
-      const response = await fetch(`/api/beats?id=${initialBeat.id}`, {
+      // Use different API endpoint for packs vs individual beats
+      const apiEndpoint = initialBeat?.isPack 
+        ? `/api/beat-packs/${initialBeat.id}`
+        : `/api/beats?id=${initialBeat.id}`;
+
+      const response = await fetch(apiEndpoint, {
         method: 'DELETE',
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete beat');
+        throw new Error(`Failed to delete ${itemType}`);
       }
 
       router.push('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete beat');
+      setError(err instanceof Error ? err.message : `Failed to delete ${itemType}`);
     }
   };
 
@@ -325,7 +340,9 @@ export default function BeatUploadForm({ mode, initialBeat, onCancel }: BeatUplo
         <form onSubmit={handleSubmit} className="space-y-6">
           <Card className="bg-gray-900 border-gray-700">
             <CardHeader>
-              <CardTitle className="text-white">Basic Information</CardTitle>
+              <CardTitle className="text-white">
+                {initialBeat?.isPack ? 'Pack Information' : 'Basic Information'}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -503,7 +520,13 @@ export default function BeatUploadForm({ mode, initialBeat, onCancel }: BeatUplo
               className="bg-black border-white text-white hover:bg-gray-800 hover:border-gray-300"
             >
               <Save className="w-4 h-4 mr-2" />
-              {isSubmitting ? (mode === 'create' ? 'Uploading...' : 'Updating...') : (mode === 'create' ? 'Upload Beat' : 'Update Beat')}
+              {isSubmitting 
+                ? (mode === 'create' ? 'Uploading...' : 'Updating...') 
+                : (mode === 'create' 
+                    ? (initialBeat?.isPack ? 'Create Pack' : 'Upload Beat')
+                    : (initialBeat?.isPack ? 'Update Pack' : 'Update Beat')
+                  )
+              }
             </Button>
 
             {mode === 'edit' && initialBeat?.id && (
@@ -514,7 +537,7 @@ export default function BeatUploadForm({ mode, initialBeat, onCancel }: BeatUplo
                 className="bg-black border-white text-white hover:bg-gray-800 hover:border-gray-300"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
-                Delete Beat
+                {initialBeat?.isPack ? 'Delete Pack' : 'Delete Beat'}
               </Button>
             )}
           </div>

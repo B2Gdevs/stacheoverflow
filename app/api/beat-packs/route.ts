@@ -3,7 +3,7 @@ import { getUser } from '@/lib/db/queries';
 import { db } from '@/lib/db/drizzle';
 import { beatPacks, beats } from '@/lib/db/schema';
 import { withLogging } from '@/lib/middleware/logging';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, inArray } from 'drizzle-orm';
 
 export async function GET(request: NextRequest) {
   return withLogging(request, async (req) => {
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
         description,
         imageFile,
         published,
-        beats: packBeats
+        selectedBeats
       } = body;
 
       // Create the beat pack
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
           title,
           artist,
           genre,
-          price,
+          price: Math.round(price * 100), // Convert to cents
           description,
           imageFile,
           published: published ? 1 : 0,
@@ -91,28 +91,16 @@ export async function POST(request: NextRequest) {
 
       const packId = newPack[0].id;
 
-      // Create beats for the pack
-      if (packBeats && packBeats.length > 0) {
-        const beatsToInsert = packBeats.map((beat: any) => ({
-          title: beat.title,
-          artist: beat.artist,
-          genre: beat.genre,
-          price: beat.price,
-          duration: beat.duration,
-          bpm: beat.bpm,
-          key: beat.key,
-          description: beat.description,
-          audioFileMp3: beat.audioFiles?.mp3,
-          audioFileWav: beat.audioFiles?.wav,
-          audioFileStems: beat.audioFiles?.stems,
-          imageFile: beat.imageFile,
-          published: beat.published ? 1 : 0,
-          isPack: 1, // Mark as pack item
-          packId: packId,
-          uploadedBy: user.id
-        }));
-
-        await db.insert(beats).values(beatsToInsert);
+      // Link existing beats to the pack
+      if (selectedBeats && selectedBeats.length > 0) {
+        await db
+          .update(beats)
+          .set({ 
+            isPack: 1,
+            packId: packId,
+            updatedAt: new Date()
+          })
+          .where(inArray(beats.id, selectedBeats));
       }
 
       return NextResponse.json(newPack[0]);
