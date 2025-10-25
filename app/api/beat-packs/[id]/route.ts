@@ -59,7 +59,7 @@ export async function GET(
 
       const packData = {
         ...pack[0],
-        price: pack[0].price / 100, // Convert from cents to dollars
+        price: pack[0].price, // Keep in cents for precision
         published: pack[0].published === 1,
         beats: formattedBeats
       };
@@ -112,7 +112,7 @@ export async function PUT(
           title,
           artist,
           genre,
-          price: Math.round(price * 100), // Convert to cents
+          price: price, // Price is already in cents
           description,
           imageFile,
           published: published ? 1 : 0,

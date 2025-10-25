@@ -59,7 +59,7 @@ export default function PackEditForm({ pack, onCancel, onComplete }: PackEditFor
     title: pack.title,
     artist: pack.artist,
     genre: pack.genre,
-    price: pack.price,
+    price: pack.price, // This is already in dollars from the API
     description: pack.description || '',
     published: pack.published,
   });
@@ -74,6 +74,26 @@ export default function PackEditForm({ pack, onCancel, onComplete }: PackEditFor
   useEffect(() => {
     setSelectedBeats(pack.beats.map(beat => beat.id));
   }, [pack.beats]);
+
+  // Calculate savings based on currently selected beats
+  const calculateSavings = () => {
+    // Get the total of currently selected beats
+    const selectedBeatsData = pack.beats.filter(beat => selectedBeats.includes(beat.id));
+    const individualTotal = selectedBeatsData.reduce((sum, beat) => sum + beat.price, 0);
+    const packPrice = parseFloat(formData.price.toString()) || 0;
+    const dollarSavings = individualTotal - packPrice;
+    const percentageSavings = individualTotal > 0 ? (dollarSavings / individualTotal) * 100 : 0;
+    
+    return {
+      individualTotal,
+      packPrice,
+      dollarSavings,
+      percentageSavings,
+      selectedBeatsCount: selectedBeatsData.length
+    };
+  };
+
+  const savings = calculateSavings();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -137,7 +157,7 @@ export default function PackEditForm({ pack, onCancel, onComplete }: PackEditFor
         title: formData.title,
         artist: formData.artist,
         genre: formData.genre,
-        price: Math.round(formData.price * 100), // Convert to cents
+        price: Math.round(formData.price * 100), // Convert from dollars to cents for database
         description: formData.description || null,
         imageFile: imageFilePath,
         published: formData.published,
@@ -192,10 +212,6 @@ export default function PackEditForm({ pack, onCancel, onComplete }: PackEditFor
   return (
     <div className="min-h-screen bg-black">
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-white mb-2">Edit Beat Pack</h1>
-          <p className="text-gray-300">Update pack details and manage included beats</p>
-        </div>
 
         {error && (
           <div className="mb-6 p-4 bg-red-900/20 border border-red-500 rounded-md">
@@ -305,6 +321,61 @@ export default function PackEditForm({ pack, onCancel, onComplete }: PackEditFor
               </div>
             </div>
           </div>
+
+          {/* Savings Calculator */}
+          {pack.beats.length > 0 && (
+            <div className="bg-gray-800 border border-gray-600 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Pack Value Calculator</h3>
+                  <p className="text-sm text-gray-400">
+                    Based on {savings.selectedBeatsCount} selected beat{savings.selectedBeatsCount !== 1 ? 's' : ''}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {savings.percentageSavings > 0 && (
+                    <span className="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                      {savings.percentageSavings.toFixed(0)}% OFF
+                    </span>
+                  )}
+                  {savings.dollarSavings > 0 && (
+                    <span className="bg-amber-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                      Save ${savings.dollarSavings.toFixed(2)}
+                    </span>
+                  )}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div className="text-center">
+                  <div className="text-gray-400 mb-1">Individual Total</div>
+                  <div className="text-lg font-semibold text-gray-300 line-through">
+                    ${savings.individualTotal.toFixed(2)}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-gray-400 mb-1">Pack Price</div>
+                  <div className="text-lg font-semibold text-amber-500">
+                    ${savings.packPrice.toFixed(2)}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-gray-400 mb-1">Customer Saves</div>
+                  <div className={`text-lg font-bold ${savings.dollarSavings > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    ${savings.dollarSavings.toFixed(2)}
+                  </div>
+                </div>
+              </div>
+              
+              {savings.dollarSavings < 0 && (
+                <div className="mt-3 p-3 bg-red-900/20 border border-red-500 rounded-lg">
+                  <div className="text-red-400 text-sm">
+                    ⚠️ Pack price is higher than individual total. Consider lowering the price for better value.
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Tabs for Beats and Details */}
           <Tabs defaultValue="beats" className="w-full">

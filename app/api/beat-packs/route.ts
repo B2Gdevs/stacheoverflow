@@ -36,9 +36,33 @@ export async function GET(request: NextRequest) {
             .from(beats)
             .where(eq(beats.packId, pack.id));
           
+          // Format beats like the beats API does
+          const formattedBeats = packBeats.map(beat => ({
+            id: beat.id,
+            title: beat.title,
+            artist: beat.artist,
+            genre: beat.genre,
+            price: beat.price / 100, // Convert from cents to dollars
+            duration: beat.duration,
+            bpm: beat.bpm,
+            key: beat.key,
+            description: beat.description,
+            category: beat.category,
+            tags: beat.tags || [],
+            imageFile: beat.imageFile,
+            published: beat.published === 1,
+            audioFiles: {
+              mp3: beat.audioFileMp3,
+              wav: beat.audioFileWav,
+              stems: beat.audioFileStems
+            }
+          }));
+          
           return {
             ...pack,
-            beats: packBeats
+            price: pack.price / 100, // Convert pack price from cents to dollars
+            published: pack.published === 1,
+            beats: formattedBeats
           };
         })
       );

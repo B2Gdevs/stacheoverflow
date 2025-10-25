@@ -52,7 +52,7 @@ export default function EditPackPage() {
             title: pack.title,
             artist: pack.artist,
             genre: pack.genre,
-            price: pack.price / 100, // Convert from cents to dollars
+            price: pack.price / 100, // Convert from cents to dollars for display
             description: pack.description,
             imageFile: pack.imageFile,
             published: pack.published === 1,

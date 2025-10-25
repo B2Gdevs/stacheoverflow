@@ -171,7 +171,7 @@ export default function BeatSearch({
               {selectedBeats.length} beat{selectedBeats.length !== 1 ? 's' : ''} selected
             </span>
             <div className="text-sm font-medium text-green-500">
-              Total: ${selectedBeats
+              Individual Total: ${selectedBeats
                 .map(id => allBeats.find(beat => beat.id === id)?.price || 0)
                 .reduce((sum, price) => sum + price, 0)
                 .toFixed(2)

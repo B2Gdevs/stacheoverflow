@@ -766,7 +766,7 @@ export function BeatUploadWizard({ onCancel, onComplete }: BeatUploadWizardProps
                           </div>
                           <p className="text-slate-400 text-sm mb-2">{beat.artist}</p>
                           <div className="flex items-center justify-between">
-                            <span className="text-amber-400 font-medium">${(beat.price / 100).toFixed(2)}</span>
+                            <span className="text-amber-400 font-medium">${beat.price.toFixed(2)}</span>
                             <span className="text-slate-500 text-xs capitalize">{beat.category}</span>
                           </div>
                           {beat.tags.length > 0 && (
@@ -854,7 +854,7 @@ export function BeatUploadWizard({ onCancel, onComplete }: BeatUploadWizardProps
                               <span className="text-white font-medium">{beat.title}</span>
                               <span className="text-slate-400 ml-2">- {beat.artist}</span>
                             </div>
-                            <span className="text-amber-400">${(beat.price / 100).toFixed(2)}</span>
+                            <span className="text-amber-400">${beat.price.toFixed(2)}</span>
                           </div>
                         ) : null;
                       })}
