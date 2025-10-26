@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Image, Save, Trash2, ArrowLeft, Plus, X, Music, Upload } from 'lucide-react';
 import useSWR from 'swr';
-import BeatSearch from '@/components/beat-search';
+import { BeatSearch } from '@/components/utils';
 
 interface Beat {
   id: number;

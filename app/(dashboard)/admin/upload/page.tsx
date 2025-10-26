@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { BeatUploadWizard } from '@/components/beat-upload-wizard';
+import { BeatUploadWizard } from '@/components/forms';
 
 export default function UploadBeatPage() {
   const router = useRouter();

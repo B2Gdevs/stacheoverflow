@@ -341,9 +341,9 @@ export default function AdminLogsPage() {
                         </div>
                       </td>
                       <td className="p-3">
-                        {log.apiLog.eventId ? (
+                          {log.apiLog.eventId ? (
                           <button
-                            onClick={() => navigator.clipboard.writeText(log.apiLog.eventId)}
+                            onClick={() => navigator.clipboard.writeText(log.apiLog.eventId || '')}
                             className="text-xs text-green-400 font-mono hover:text-green-300 hover:bg-gray-600 px-2 py-1 rounded transition-colors cursor-pointer"
                             title={`Click to copy: ${log.apiLog.eventId}`}
                           >

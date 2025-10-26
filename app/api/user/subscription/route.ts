@@ -4,7 +4,7 @@ import { getUserSubscription } from '@/lib/stripe/subscriptions';
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-06-20',
+  apiVersion: '2025-04-30.basil',
 });
 
 export async function GET() {
@@ -46,9 +46,11 @@ export async function DELETE() {
     }
 
     // Cancel the subscription in Stripe
-    await stripe.subscriptions.update(subscription.subscription.stripeSubscriptionId, {
-      cancel_at_period_end: true,
-    });
+    if (subscription.subscription.stripeSubscriptionId) {
+      await stripe.subscriptions.update(subscription.subscription.stripeSubscriptionId, {
+        cancel_at_period_end: true,
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

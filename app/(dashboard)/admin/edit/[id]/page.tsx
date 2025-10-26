@@ -2,7 +2,7 @@
 
 import { useRouter, useParams } from 'next/navigation';
 import useSWR from 'swr';
-import BeatUploadForm from '@/components/beat-upload-form';
+import { BeatUploadForm } from '@/components/forms';
 
 interface Beat {
   id: number;
@@ -33,7 +33,7 @@ export default function EditBeatPage() {
   // Fetch the beat data
   const { data: beat, error: fetchError, mutate } = useSWR<Beat>(
     beatId ? `/api/beats/${beatId}` : null,
-    (url) => {
+    (url: string) => {
       console.log('Fetching beat from:', url);
       return fetch(url).then(res => {
         console.log('Beat fetch response:', res.status, res.statusText);

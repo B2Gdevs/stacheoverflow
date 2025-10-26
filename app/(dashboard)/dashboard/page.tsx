@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { AudioProvider } from '@/contexts/audio-context';
-import { DashboardContent } from '@/components/dashboard-content';
+import { AudioProvider } from '@/lib/audio';
+import { DashboardContent } from '@/components/dashboard';
 
 export default function DashboardPage() {
   return (

@@ -1,27 +1,39 @@
 'use client';
 
 import React from 'react';
-import { Download, ShoppingCart } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Download, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAudio } from '@/contexts/audio-context';
-import { AudioPlayer } from '@/components/audio-player';
+import { useAudio } from './context';
 
-interface GlobalAudioPlayerProps {
+interface AudioPlayerProps {
   onPurchase?: (trackId: string) => void;
   onDownload?: (trackId: string) => void;
 }
 
-export function GlobalAudioPlayer({ onPurchase, onDownload }: GlobalAudioPlayerProps) {
+export function AudioPlayer({ onPurchase, onDownload }: AudioPlayerProps) {
   const { 
     currentTrack, 
     isPlayerVisible, 
     closePlayer, 
-    playerState 
+    playerState,
+    playerControls,
+    toggleTrack 
   } = useAudio();
 
-  if (!isPlayerVisible || !currentTrack) return null;
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement> | React.FormEvent<HTMLInputElement>) => {
+    const newTime = parseFloat((e.target as HTMLInputElement).value);
+    if (!isNaN(newTime)) {
+      playerControls.seek(newTime);
+    }
+  };
 
-  const audioSrc = currentTrack.audioFile ? `/api/audio/${currentTrack.audioFile}` : '';
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  if (!isPlayerVisible || !currentTrack) return null;
 
   return (
     <div className="sticky bottom-0 z-50 bg-black border-t-2 border-gray-700 w-full">
@@ -64,9 +76,44 @@ export function GlobalAudioPlayer({ onPurchase, onDownload }: GlobalAudioPlayerP
           </div>
         </div>
 
-        {/* Audio Controls */}
-        <div className="flex-1 justify-center">
-          <AudioPlayer src={audioSrc} />
+        {/* Audio Element */}
+        {currentTrack.audioFile && (
+          <audio
+            src={`/api/audio/${currentTrack.audioFile}`}
+            preload="metadata"
+            className="hidden"
+          />
+        )}
+
+        {/* Controls */}
+        <div className="flex items-center gap-3 flex-1 justify-center">
+          <Button
+            size="sm"
+            onClick={toggleTrack}
+            className="bg-green-500 hover:bg-green-600 text-white w-8 h-8 rounded-full cursor-pointer"
+          >
+            {playerState.isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3 ml-0.5" />}
+          </Button>
+          
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-400 w-6">{formatTime(playerState.currentTime)}</span>
+            <div className="relative w-24">
+              <input
+                type="range"
+                min="0"
+                max={playerState.duration || 0}
+                value={playerState.currentTime}
+                onChange={handleSeek}
+                onInput={handleSeek}
+                className="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                style={{
+                  background: `linear-gradient(to right, #10b981 0%, #10b981 ${(playerState.currentTime / (playerState.duration || 1)) * 100}%, #374151 ${(playerState.currentTime / (playerState.duration || 1)) * 100}%, #374151 100%)`
+                }}
+                disabled={!playerState.duration}
+              />
+            </div>
+            <span className="text-xs text-gray-400 w-6">{formatTime(playerState.duration)}</span>
+          </div>
         </div>
 
         {/* Purchase/Download Actions */}
@@ -92,8 +139,28 @@ export function GlobalAudioPlayer({ onPurchase, onDownload }: GlobalAudioPlayerP
           )}
         </div>
 
-        {/* Close Button */}
+        {/* Volume and Close */}
         <div className="flex items-center gap-3 flex-1 justify-end">
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => playerControls.mute()}
+              className="text-gray-400 hover:text-white w-6 h-6 p-0 cursor-pointer"
+            >
+              {playerState.isMuted ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
+            </Button>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.1"
+              value={playerState.isMuted ? 0 : playerState.volume}
+              onChange={(e) => playerControls.setVolume(parseFloat(e.target.value))}
+              className="w-16 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+            />
+          </div>
+          
           <Button
             size="sm"
             variant="ghost"

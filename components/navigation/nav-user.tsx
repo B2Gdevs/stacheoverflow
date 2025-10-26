@@ -74,7 +74,7 @@ export function NavUser({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={displayUser.avatar} alt={displayUser.name} />
+                <AvatarImage src={'avatar' in displayUser ? displayUser.avatar : undefined} alt={displayUser.name || displayUser.email} />
                 <AvatarFallback className="rounded-lg">
                   {isGuest ? 'G' : displayUser.email
                     .split(' ')
@@ -84,8 +84,8 @@ export function NavUser({
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <div className="flex items-center gap-2">
-                  <span className="truncate font-medium">{displayUser.name}</span>
-                  {isAuthenticated && displayUser.role === 'admin' && (
+                  <span className="truncate font-medium">{displayUser.name || displayUser.email}</span>
+                  {isAuthenticated && 'role' in displayUser && displayUser.role === 'admin' && (
                     <Shield className="h-3 w-3 text-green-500" />
                   )}
                 </div>
@@ -103,7 +103,7 @@ export function NavUser({
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={displayUser.avatar} alt={displayUser.name} />
+                  <AvatarImage src={'avatar' in displayUser ? displayUser.avatar : undefined} alt={displayUser.name || displayUser.email} />
                   <AvatarFallback className="rounded-lg">
                     {isGuest ? 'G' : displayUser.email
                       .split(' ')
@@ -113,8 +113,8 @@ export function NavUser({
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <div className="flex items-center gap-2">
-                    <span className="truncate font-medium">{displayUser.name}</span>
-                    {isAuthenticated && displayUser.role === 'admin' && (
+                    <span className="truncate font-medium">{displayUser.name || displayUser.email}</span>
+                    {isAuthenticated && 'role' in displayUser && displayUser.role === 'admin' && (
                       <Shield className="h-3 w-3 text-green-500" />
                     )}
                   </div>

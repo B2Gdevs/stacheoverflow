@@ -3,7 +3,7 @@ import { db } from '@/lib/db/drizzle';
 import { beats, type NewBeat } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { getUser } from '@/lib/db/queries';
-import { deleteFile } from '@/lib/storage';
+import { deleteFile, uploadFile } from '@/lib/storage';
 
 export async function GET() {
   try {
@@ -66,22 +66,27 @@ export async function POST(request: Request) {
       );
     }
 
-    const body = await request.json();
-    const {
-      title,
-      artist,
-      genre,
-      price,
-      duration,
-      bpm,
-      key,
-      description,
-      category,
-      tags,
-      published,
-      audioFiles,
-      imageFile
-    } = body;
+    // Handle FormData instead of JSON
+    const formData = await request.formData();
+    
+    // Extract form data
+    const title = formData.get('title') as string;
+    const artist = formData.get('artist') as string;
+    const genre = formData.get('genre') as string;
+    const price = parseFloat(formData.get('price') as string);
+    const duration = formData.get('duration') as string || '';
+    const bpm = parseInt(formData.get('bpm') as string) || 0;
+    const key = formData.get('key') as string || '';
+    const description = formData.get('description') as string || '';
+    const category = formData.get('category') as string || 'artist';
+    const tags = JSON.parse(formData.get('tags') as string || '[]');
+    const published = formData.get('published') === 'true';
+    
+    // Handle file uploads
+    const mp3File = formData.get('mp3File') as File | null;
+    const wavFile = formData.get('wavFile') as File | null;
+    const stemsFile = formData.get('stemsFile') as File | null;
+    const imageFile = formData.get('imageFile') as File | null;
 
     // Validate required fields
     if (!title || !artist || !genre || !price) {
@@ -91,22 +96,60 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if a beat with the same audio file already exists
-    if (audioFiles?.mp3) {
-      const existingBeat = await db
-        .select()
-        .from(beats)
-        .where(eq(beats.audioFileMp3, audioFiles.mp3))
-        .limit(1);
-      
-      if (existingBeat.length > 0) {
+    // Upload files and get file names
+    let mp3FileName = null;
+    let wavFileName = null;
+    let stemsFileName = null;
+    let imageFileName = null;
+
+    if (mp3File) {
+      const mp3Buffer = Buffer.from(await mp3File.arrayBuffer());
+      const mp3Result = await uploadFile(mp3Buffer, mp3File.name, mp3File.type);
+      if (mp3Result.success) {
+        mp3FileName = mp3Result.fileName;
+      } else {
         return NextResponse.json(
-          { 
-            error: 'A beat with this MP3 file already exists. Please use a different file or update the existing beat.',
-            code: 'DUPLICATE_FILE',
-            existingBeatId: existingBeat[0].id
-          },
-          { status: 409 }
+          { error: 'Failed to upload MP3 file: ' + mp3Result.error },
+          { status: 500 }
+        );
+      }
+    }
+
+    if (wavFile) {
+      const wavBuffer = Buffer.from(await wavFile.arrayBuffer());
+      const wavResult = await uploadFile(wavBuffer, wavFile.name, wavFile.type);
+      if (wavResult.success) {
+        wavFileName = wavResult.fileName;
+      } else {
+        return NextResponse.json(
+          { error: 'Failed to upload WAV file: ' + wavResult.error },
+          { status: 500 }
+        );
+      }
+    }
+
+    if (stemsFile) {
+      const stemsBuffer = Buffer.from(await stemsFile.arrayBuffer());
+      const stemsResult = await uploadFile(stemsBuffer, stemsFile.name, stemsFile.type);
+      if (stemsResult.success) {
+        stemsFileName = stemsResult.fileName;
+      } else {
+        return NextResponse.json(
+          { error: 'Failed to upload stems file: ' + stemsResult.error },
+          { status: 500 }
+        );
+      }
+    }
+
+    if (imageFile) {
+      const imageBuffer = Buffer.from(await imageFile.arrayBuffer());
+      const imageResult = await uploadFile(imageBuffer, imageFile.name, imageFile.type);
+      if (imageResult.success) {
+        imageFileName = imageResult.fileName;
+      } else {
+        return NextResponse.json(
+          { error: 'Failed to upload image file: ' + imageResult.error },
+          { status: 500 }
         );
       }
     }
@@ -123,10 +166,10 @@ export async function POST(request: Request) {
       category: category || 'artist',
       tags: tags || [],
       published: published ? 1 : 0,
-      audioFileMp3: audioFiles?.mp3 || null,
-      audioFileWav: audioFiles?.wav || null,
-      audioFileStems: audioFiles?.stems || null,
-      imageFile: imageFile || null,
+      audioFileMp3: mp3FileName,
+      audioFileWav: wavFileName,
+      audioFileStems: stemsFileName,
+      imageFile: imageFileName,
       uploadedBy: user.id,
       isActive: 1
     };

@@ -4,6 +4,7 @@ import { db } from '@/lib/db/drizzle';
 import { beatPacks, beats } from '@/lib/db/schema';
 import { withLogging } from '@/lib/middleware/logging';
 import { eq, desc, inArray } from 'drizzle-orm';
+import { uploadFile } from '@/lib/storage';
 
 export async function GET(request: NextRequest) {
   return withLogging(request, async (req) => {
@@ -86,17 +87,35 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
 
-      const body = await req.json();
-      const {
-        title,
-        artist,
-        genre,
-        price,
-        description,
-        imageFile,
-        published,
-        selectedBeats
-      } = body;
+      // Handle FormData instead of JSON
+      const formData = await req.formData();
+      
+      // Extract form data
+      const title = formData.get('title') as string;
+      const artist = formData.get('artist') as string;
+      const genre = formData.get('genre') as string;
+      const price = parseFloat(formData.get('price') as string);
+      const description = formData.get('description') as string || '';
+      const published = formData.get('published') === 'true';
+      const selectedBeats = JSON.parse(formData.get('selectedBeats') as string || '[]');
+      
+      // Handle file uploads
+      const imageFile = formData.get('imageFile') as File | null;
+
+      // Upload pack image if provided
+      let imageFileName = null;
+      if (imageFile) {
+        const imageBuffer = Buffer.from(await imageFile.arrayBuffer());
+        const imageResult = await uploadFile(imageBuffer, imageFile.name, imageFile.type);
+        if (imageResult.success) {
+          imageFileName = imageResult.fileName;
+        } else {
+          return NextResponse.json(
+            { error: 'Failed to upload image file: ' + imageResult.error },
+            { status: 500 }
+          );
+        }
+      }
 
       // Create the beat pack
       const newPack = await db
@@ -107,7 +126,7 @@ export async function POST(request: NextRequest) {
           genre,
           price: Math.round(price * 100), // Convert to cents
           description,
-          imageFile,
+          imageFile: imageFileName,
           published: published ? 1 : 0,
           uploadedBy: user.id
         })

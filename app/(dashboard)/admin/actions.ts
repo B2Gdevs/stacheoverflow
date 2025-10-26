@@ -1,7 +1,7 @@
 'use server';
 
 import { z } from 'zod';
-import { eq } from 'drizzle-orm';
+import { eq, isNull } from 'drizzle-orm';
 import { db } from '@/lib/db/drizzle';
 import { users, beats, type NewBeat } from '@/lib/db/schema';
 import { getUser } from '@/lib/db/queries';
@@ -175,7 +175,7 @@ export async function getAllUsers() {
       updatedAt: users.updatedAt
     })
     .from(users)
-    .where(eq(users.deletedAt, null));
+    .where(isNull(users.deletedAt));
 
   return { users: allUsers };
 }

@@ -31,7 +31,7 @@ export default function AdminSubscriptionsPage() {
     monthlyDownloads: '',
   });
 
-  const { data: plans, error, mutate } = useSWR<SubscriptionPlan[]>('/api/admin/subscriptions', (url) => {
+  const { data: plans, error, mutate } = useSWR<SubscriptionPlan[]>('/api/admin/subscriptions', (url: string) => {
     console.log('Fetching subscription plans from:', url);
     return fetch(url).then(res => {
       console.log('Subscription plans response:', res.status, res.statusText);
@@ -137,7 +137,7 @@ export default function AdminSubscriptionsPage() {
       handleCancel();
     } catch (error) {
       console.error('Error saving subscription plan:', error);
-      alert('Failed to save subscription plan: ' + error.message);
+      alert('Failed to save subscription plan: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   };
 
