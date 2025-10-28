@@ -25,7 +25,9 @@ export function WizardProvider({
   children: React.ReactNode;
   config: WizardConfig;
 }) {
-  const [currentStep, setCurrentStep] = useState<WizardStep>(config.steps[0]);
+  const [currentStep, setCurrentStep] = useState<WizardStep>(
+    config.initialStep || config.steps[0]
+  );
   const [status, setStatus] = useState<WizardStatus>(WizardStatus.IDLE);
   const [data, setData] = useState<WizardData>(config.initialData);
 

@@ -43,8 +43,8 @@ interface WizardStepContainerProps {
 
 export function WizardStepContainer({ children, className = '' }: WizardStepContainerProps) {
   return (
-    <Card className={`bg-gray-900 border-2 border-gray-700 ${className}`}>
-      <CardContent className="p-4">
+    <Card className={`bg-green-950 border-0 border-gray-400 ${className}`}>
+      <CardContent className="p-6">
         {children}
       </CardContent>
     </Card>

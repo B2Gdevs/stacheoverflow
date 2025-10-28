@@ -19,6 +19,7 @@ export interface WizardStepProps {
 
 export interface WizardConfig {
   steps: WizardStep[];
+  initialStep?: WizardStep;
   initialData: any;
   onComplete: (data: any) => void;
   onCancel?: () => void;

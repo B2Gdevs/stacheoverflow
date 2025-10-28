@@ -1,8 +1,20 @@
 'use client';
 
 import React from 'react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { 
+  Music, 
+  User, 
+  Hash, 
+  Clock, 
+  Key, 
+  DollarSign, 
+  FileText, 
+  Star,
+  Zap,
+  Heart
+} from 'lucide-react';
+import { EnhancedInput, EnhancedSelect, EnhancedTextarea } from '@/components/ui/enhanced-input';
+import { TagSection, CategorySelector } from '@/components/ui/enhanced-tags';
 import { BeatData, Category, useWizard } from '@/lib/wizard';
 import { CATEGORY_TAGS, GENRE_OPTIONS } from '@/lib/wizard/constants';
 
@@ -39,141 +51,119 @@ export function BeatInfoStep() {
     handleInputChange('tags', beat.tags.filter(t => t !== tag));
   };
 
+  const genreOptions = [
+    { value: '', label: 'Select genre' },
+    ...GENRE_OPTIONS.map(genre => ({ value: genre, label: genre }))
+  ];
+
+  const categoryOptions = [
+    { 
+      value: Category.ARTIST, 
+      label: 'For Artists', 
+      icon: <Music className="h-5 w-5" />, 
+      description: 'Perfect for rappers, singers, and artists' 
+    },
+    { 
+      value: Category.GAME, 
+      label: 'For Games', 
+      icon: <Zap className="h-5 w-5" />, 
+      description: 'Ideal for game soundtracks and sound effects' 
+    }
+  ];
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Title & Artist Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <Label htmlFor="title" className="text-white font-bold">Title *</Label>
-          <Input
-            id="title"
-            value={beat.title}
-            onChange={(e) => handleInputChange('title', e.target.value)}
-            className="bg-black border-2 border-gray-600 text-white cursor-text"
-            placeholder="Enter beat title"
-          />
-        </div>
-        <div>
-          <Label htmlFor="artist" className="text-white font-bold">Artist *</Label>
-          <Input
-            id="artist"
-            value={beat.artist}
-            onChange={(e) => handleInputChange('artist', e.target.value)}
-            className="bg-black border-2 border-gray-600 text-white cursor-text"
-            placeholder="Enter artist name"
-          />
-        </div>
+        <EnhancedInput
+          icon={Music}
+          label="Beat Title *"
+          value={beat.title}
+          onChange={(e) => handleInputChange('title', e.target.value)}
+          placeholder="Enter your beat title"
+          tooltip="Make it catchy and memorable"
+        />
+        <EnhancedInput
+          icon={User}
+          label="Artist Name *"
+          value={beat.artist}
+          onChange={(e) => handleInputChange('artist', e.target.value)}
+          placeholder="Enter artist name"
+          tooltip="Your stage name or real name"
+        />
       </div>
 
+      {/* Genre, BPM & Key Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div>
-          <Label htmlFor="genre" className="text-white font-bold">Genre *</Label>
-          <select
-            id="genre"
-            value={beat.genre}
-            onChange={(e) => handleInputChange('genre', e.target.value)}
-            className="w-full p-2 bg-black border-2 border-gray-600 text-white rounded-md cursor-pointer"
-          >
-            <option value="">Select genre</option>
-            {GENRE_OPTIONS.map(genre => (
-              <option key={genre} value={genre}>{genre}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <Label htmlFor="bpm" className="text-white font-bold">BPM</Label>
-          <Input
-            id="bpm"
-            type="number"
-            value={beat.bpm}
-            onChange={(e) => handleInputChange('bpm', parseInt(e.target.value) || 0)}
-            className="bg-black border-2 border-gray-600 text-white cursor-text"
-            placeholder="120"
-          />
-        </div>
-        <div>
-          <Label htmlFor="key" className="text-white font-bold">Key</Label>
-          <Input
-            id="key"
-            value={beat.key}
-            onChange={(e) => handleInputChange('key', e.target.value)}
-            className="bg-black border-2 border-gray-600 text-white cursor-text"
-            placeholder="C Major"
-          />
-        </div>
+        <EnhancedSelect
+          icon={Hash}
+          label="Genre *"
+          value={beat.genre}
+          onChange={(e) => handleInputChange('genre', e.target.value)}
+          options={genreOptions}
+          tooltip="Choose the main genre"
+        />
+        <EnhancedInput
+          icon={Clock}
+          label="BPM"
+          type="number"
+          value={beat.bpm}
+          onChange={(e) => handleInputChange('bpm', parseInt(e.target.value) || 0)}
+          placeholder="120"
+          tooltip="Beats per minute"
+        />
+        <EnhancedInput
+          icon={Key}
+          label="Musical Key"
+          value={beat.key}
+          onChange={(e) => handleInputChange('key', e.target.value)}
+          placeholder="C Major"
+          tooltip="Musical key signature"
+        />
       </div>
 
-      <div>
-        <Label htmlFor="price" className="text-white font-bold">Price ($) *</Label>
-        <Input
-          id="price"
+      {/* Price Section */}
+      <div className="max-w-md">
+        <EnhancedInput
+          icon={DollarSign}
+          label="Price ($) *"
           type="number"
           step="0.01"
           value={beat.price}
           onChange={(e) => handleInputChange('price', parseFloat(e.target.value) || 0)}
-          className="bg-black border-2 border-gray-600 text-white cursor-text"
           placeholder="0.00"
+          tooltip="Set your beat price in USD"
         />
       </div>
 
-      <div>
-        <Label htmlFor="description" className="text-white font-bold">Description</Label>
-        <textarea
-          id="description"
-          value={beat.description}
-          onChange={(e) => handleInputChange('description', e.target.value)}
-          className="w-full p-2 bg-black border-2 border-gray-600 text-white rounded-md cursor-text"
-          rows={3}
-          placeholder="Describe your beat..."
-        />
-      </div>
+      {/* Description Section */}
+      <EnhancedTextarea
+        icon={FileText}
+        label="Description"
+        value={beat.description}
+        onChange={(e) => handleInputChange('description', e.target.value)}
+        placeholder="Describe your beat, its vibe, and what makes it special..."
+        rows={4}
+        tooltip="Tell potential buyers about your beat"
+      />
 
-      {/* Category & Tags */}
-      <div className="space-y-4">
-        <div>
-          <Label className="text-white font-bold">Category</Label>
-          <select
-            value={beat.category}
-            onChange={(e) => handleCategoryChange(e.target.value as Category)}
-            className="w-full p-2 bg-black border-2 border-gray-600 text-white rounded-md cursor-pointer"
-          >
-            <option value={Category.ARTIST}>For Artists</option>
-            <option value={Category.GAME}>For Games</option>
-          </select>
-        </div>
+      {/* Category Selection */}
+      <CategorySelector
+        categories={categoryOptions}
+        selectedCategory={beat.category}
+        onCategoryChange={(category) => handleCategoryChange(category as Category)}
+      />
 
-        <div>
-          <Label className="text-white font-bold">Tags</Label>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {CATEGORY_TAGS[beat.category].map(tag => (
-              <button
-                key={tag}
-                onClick={() => addTag(tag)}
-                className="px-3 py-1 bg-gray-700 text-gray-300 rounded-full text-sm hover:bg-gray-600 cursor-pointer"
-              >
-                + {tag}
-              </button>
-            ))}
-          </div>
-          {Array.isArray(beat.tags) && beat.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-2">
-              {beat.tags.map(tag => (
-                <span
-                  key={tag}
-                  className="px-3 py-1 bg-green-500 text-white rounded-full text-sm flex items-center gap-2"
-                >
-                  {tag}
-                  <button
-                    onClick={() => removeTag(tag)}
-                    className="text-green-200 hover:text-white cursor-pointer"
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Tags Section */}
+      <TagSection
+        title="Beat Tags"
+        description="Add tags to help people find your beat"
+        icon={<Star className="h-5 w-5 text-green-400" />}
+        tags={[...CATEGORY_TAGS[beat.category]]}
+        selectedTags={Array.isArray(beat.tags) ? beat.tags : []}
+        onTagClick={addTag}
+        onTagRemove={removeTag}
+      />
     </div>
   );
 }

@@ -49,6 +49,7 @@ function BeatWizardContent({ mode, onCancel, onComplete }: BeatWizardProps) {
   console.log('🎵 BeatWizardContent: Mode:', mode);
 
   const getStepsForType = (uploadType: UploadType) => {
+    // Always include all steps for progress bar, but start at different points when editing
     if (uploadType === UploadType.SINGLE) {
       return [
         WizardStep.SELECT_TYPE,
@@ -151,24 +152,6 @@ function BeatWizardContent({ mode, onCancel, onComplete }: BeatWizardProps) {
     }
   };
 
-  const handleComplete = async (wizardData: WizardData) => {
-    console.log('🎵 BeatWizardContent: handleComplete called with data:', wizardData);
-    try {
-      if (wizardData.uploadType === UploadType.SINGLE) {
-        console.log('🎵 BeatWizardContent: Submitting single beat');
-        await submitSingleBeat(wizardData.beat, mode);
-      } else {
-        console.log('🎵 BeatWizardContent: Submitting beat pack');
-        await submitBeatPack(wizardData.pack, wizardData.selectedBeats, mode);
-      }
-      
-      console.log('🎵 BeatWizardContent: Submission successful, calling onComplete');
-      onComplete?.(wizardData);
-    } catch (error) {
-      console.error('🎵 BeatWizardContent: Error submitting wizard data:', error);
-      alert('Failed to submit. Please try again.');
-    }
-  };
 
   return (
     <WizardContainer>
@@ -316,6 +299,19 @@ export function BeatWizard({ mode, initialBeat, onCancel, onComplete }: BeatWiza
 
   console.log('🎵 BeatWizard: Initial data for wizard:', initialData);
 
+  // Determine initial step based on mode and data
+  const getInitialStep = () => {
+    if (mode === WizardMode.EDIT) {
+      // Start at the info step (step 2) when editing, but keep all steps visible
+      return initialData.uploadType === UploadType.SINGLE 
+        ? WizardStep.BEAT_INFO 
+        : WizardStep.PACK_INFO;
+    } else {
+      // Start with type selection when creating
+      return WizardStep.SELECT_TYPE;
+    }
+  };
+
   const config = {
     mode,
     steps: [
@@ -326,6 +322,7 @@ export function BeatWizard({ mode, initialBeat, onCancel, onComplete }: BeatWiza
       WizardStep.SELECT_BEATS,
       WizardStep.REVIEW
     ],
+    initialStep: getInitialStep(),
     initialData,
     onComplete: async (data: WizardData) => {
       console.log('🎵 BeatWizard: Wizard completed with data:', data);

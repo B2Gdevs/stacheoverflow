@@ -1,8 +1,16 @@
 'use client';
 
 import React from 'react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { 
+  Package, 
+  User, 
+  Hash, 
+  DollarSign, 
+  FileText, 
+  Image as ImageIcon,
+  Upload
+} from 'lucide-react';
+import { EnhancedInput, EnhancedSelect, EnhancedTextarea } from '@/components/ui/enhanced-input';
 import { PackData, useWizard } from '@/lib/wizard';
 import { GENRE_OPTIONS } from '@/lib/wizard/constants';
 
@@ -54,81 +62,89 @@ export function PackInfoStep() {
     return null;
   };
 
+  const genreOptions = [
+    { value: '', label: 'Select genre' },
+    ...GENRE_OPTIONS.map(genre => ({ value: genre, label: genre }))
+  ];
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Pack Title & Artist Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <Label htmlFor="pack-title" className="text-white font-bold">Pack Title *</Label>
-          <Input
-            id="pack-title"
-            value={pack.title}
-            onChange={(e) => handleInputChange('title', e.target.value)}
-            className="bg-black border-2 border-gray-600 text-white cursor-text"
-            placeholder="Enter pack title"
-          />
-        </div>
-        <div>
-          <Label htmlFor="pack-artist" className="text-white font-bold">Artist *</Label>
-          <Input
-            id="pack-artist"
-            value={pack.artist}
-            onChange={(e) => handleInputChange('artist', e.target.value)}
-            className="bg-black border-2 border-gray-600 text-white cursor-text"
-            placeholder="Enter artist name"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <Label htmlFor="pack-genre" className="text-white font-bold">Genre *</Label>
-          <select
-            id="pack-genre"
-            value={pack.genre}
-            onChange={(e) => handleInputChange('genre', e.target.value)}
-            className="w-full p-2 bg-black border-2 border-gray-600 text-white rounded-md cursor-pointer"
-          >
-            <option value="">Select genre</option>
-            {GENRE_OPTIONS.map(genre => (
-              <option key={genre} value={genre}>{genre}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <Label htmlFor="pack-price" className="text-white font-bold">Price ($) *</Label>
-          <Input
-            id="pack-price"
-            type="number"
-            step="0.01"
-            value={pack.price}
-            onChange={(e) => handleInputChange('price', parseFloat(e.target.value) || 0)}
-            className="bg-black border-2 border-gray-600 text-white cursor-text"
-            placeholder="0.00"
-          />
-        </div>
-      </div>
-
-      <div>
-        <Label htmlFor="pack-description" className="text-white font-bold">Description</Label>
-        <textarea
-          id="pack-description"
-          value={pack.description}
-          onChange={(e) => handleInputChange('description', e.target.value)}
-          className="w-full p-2 bg-black border-2 border-gray-600 text-white rounded-md cursor-text"
-          rows={3}
-          placeholder="Describe your beat pack..."
+        <EnhancedInput
+          icon={Package}
+          label="Pack Title *"
+          value={pack.title}
+          onChange={(e) => handleInputChange('title', e.target.value)}
+          placeholder="Enter your pack title"
+          tooltip="Make it descriptive and appealing"
+        />
+        <EnhancedInput
+          icon={User}
+          label="Artist Name *"
+          value={pack.artist}
+          onChange={(e) => handleInputChange('artist', e.target.value)}
+          placeholder="Enter artist name"
+          tooltip="Your stage name or real name"
         />
       </div>
 
-      <div>
-        <Label htmlFor="pack-image" className="text-white font-bold">Pack Cover Image</Label>
-        <input
-          id="pack-image"
-          type="file"
-          accept="image/*"
-          onChange={(e) => handleInputChange('imageFile', e.target.files?.[0] || null)}
-          className="w-full p-2 bg-black border-2 border-gray-600 text-white rounded-md cursor-pointer file:bg-gray-700 file:text-white file:border-0 file:rounded file:px-3 file:py-1"
+      {/* Genre & Price Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <EnhancedSelect
+          icon={Hash}
+          label="Genre *"
+          value={pack.genre}
+          onChange={(e) => handleInputChange('genre', e.target.value)}
+          options={genreOptions}
+          tooltip="Choose the main genre for this pack"
         />
+        <EnhancedInput
+          icon={DollarSign}
+          label="Pack Price ($) *"
+          type="number"
+          step="0.01"
+          value={pack.price}
+          onChange={(e) => handleInputChange('price', parseFloat(e.target.value) || 0)}
+          placeholder="0.00"
+          tooltip="Set your pack price in USD"
+        />
+      </div>
+
+      {/* Description Section */}
+      <EnhancedTextarea
+        icon={FileText}
+        label="Pack Description"
+        value={pack.description}
+        onChange={(e) => handleInputChange('description', e.target.value)}
+        placeholder="Describe your beat pack, what's included, and why it's special..."
+        rows={4}
+        tooltip="Tell potential buyers about your pack"
+      />
+
+      {/* Cover Image Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <ImageIcon className="h-5 w-5 text-green-400" />
+          <h3 className="text-white font-bold text-lg">Pack Cover Image</h3>
+        </div>
+        <p className="text-gray-400 text-sm">Upload a cover image for your beat pack</p>
+        
+        <div className="relative">
+          <input
+            id="pack-image"
+            type="file"
+            accept="image/*"
+            onChange={(e) => handleInputChange('imageFile', e.target.files?.[0] || null)}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          />
+          <div className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center hover:border-gray-500 transition-colors cursor-pointer">
+            <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-white font-medium mb-2">Click to upload cover image</p>
+            <p className="text-gray-400 text-sm">PNG, JPG, WEBP up to 10MB</p>
+          </div>
+        </div>
+        
         {getPackImageDisplay()}
       </div>
     </div>
