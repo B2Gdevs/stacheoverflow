@@ -10,7 +10,7 @@ import {
   Image as ImageIcon,
   Upload
 } from 'lucide-react';
-import { EnhancedInput, EnhancedSelect, EnhancedTextarea } from '@/components/ui/enhanced-input';
+import { Input, Select, Textarea } from '@/components/primitives';
 import { PackData, useWizard } from '@/lib/wizard';
 import { GENRE_OPTIONS } from '@/lib/wizard/constants';
 
@@ -71,7 +71,7 @@ export function PackInfoStep() {
     <div className="space-y-8">
       {/* Pack Title & Artist Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <EnhancedInput
+        <Input
           icon={Package}
           label="Pack Title *"
           value={pack.title}
@@ -79,7 +79,7 @@ export function PackInfoStep() {
           placeholder="Enter your pack title"
           tooltip="Make it descriptive and appealing"
         />
-        <EnhancedInput
+        <Input
           icon={User}
           label="Artist Name *"
           value={pack.artist}
@@ -91,7 +91,7 @@ export function PackInfoStep() {
 
       {/* Genre & Price Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <EnhancedSelect
+        <Select
           icon={Hash}
           label="Genre *"
           value={pack.genre}
@@ -99,7 +99,7 @@ export function PackInfoStep() {
           options={genreOptions}
           tooltip="Choose the main genre for this pack"
         />
-        <EnhancedInput
+        <Input
           icon={DollarSign}
           label="Pack Price ($) *"
           type="number"
@@ -112,7 +112,7 @@ export function PackInfoStep() {
       </div>
 
       {/* Description Section */}
-      <EnhancedTextarea
+      <Textarea
         icon={FileText}
         label="Pack Description"
         value={pack.description}

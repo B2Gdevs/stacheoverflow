@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/primitives';
 import { WizardNavigation } from './navigation';
 
 
@@ -43,10 +43,8 @@ interface WizardStepContainerProps {
 
 export function WizardStepContainer({ children, className = '' }: WizardStepContainerProps) {
   return (
-    <Card className={`bg-green-950 border-0 border-gray-400 ${className}`}>
-      <CardContent className="p-6">
-        {children}
-      </CardContent>
-    </Card>
+    <div className={`bg-green-950 border-0 border-gray-400 rounded-xl p-6 ${className}`}>
+      {children}
+    </div>
   );
 }

@@ -13,7 +13,7 @@ import {
   Zap,
   Heart
 } from 'lucide-react';
-import { EnhancedInput, EnhancedSelect, EnhancedTextarea } from '@/components/ui/enhanced-input';
+import { Input, Select, Textarea } from '@/components/primitives';
 import { TagSection, CategorySelector } from '@/components/ui/enhanced-tags';
 import { BeatData, Category, useWizard } from '@/lib/wizard';
 import { CATEGORY_TAGS, GENRE_OPTIONS } from '@/lib/wizard/constants';
@@ -75,7 +75,7 @@ export function BeatInfoStep() {
     <div className="space-y-8">
       {/* Title & Artist Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <EnhancedInput
+        <Input
           icon={Music}
           label="Beat Title *"
           value={beat.title}
@@ -83,7 +83,7 @@ export function BeatInfoStep() {
           placeholder="Enter your beat title"
           tooltip="Make it catchy and memorable"
         />
-        <EnhancedInput
+        <Input
           icon={User}
           label="Artist Name *"
           value={beat.artist}
@@ -95,7 +95,7 @@ export function BeatInfoStep() {
 
       {/* Genre, BPM & Key Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <EnhancedSelect
+        <Select
           icon={Hash}
           label="Genre *"
           value={beat.genre}
@@ -103,7 +103,7 @@ export function BeatInfoStep() {
           options={genreOptions}
           tooltip="Choose the main genre"
         />
-        <EnhancedInput
+        <Input
           icon={Clock}
           label="BPM"
           type="number"
@@ -112,7 +112,7 @@ export function BeatInfoStep() {
           placeholder="120"
           tooltip="Beats per minute"
         />
-        <EnhancedInput
+        <Input
           icon={Key}
           label="Musical Key"
           value={beat.key}
@@ -124,7 +124,7 @@ export function BeatInfoStep() {
 
       {/* Price Section */}
       <div className="max-w-md">
-        <EnhancedInput
+        <Input
           icon={DollarSign}
           label="Price ($) *"
           type="number"
@@ -137,7 +137,7 @@ export function BeatInfoStep() {
       </div>
 
       {/* Description Section */}
-      <EnhancedTextarea
+      <Textarea
         icon={FileText}
         label="Description"
         value={beat.description}

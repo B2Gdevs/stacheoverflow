@@ -33,21 +33,12 @@ export function WizardNavigation({
     <div className={`flex items-center justify-between ${className}`}>
       <div className="flex items-center gap-4">
         {canGoBack && onBack && (
-          <Button
-            variant="outline"
-            onClick={onBack}
-            className="bg-gray-800 border-2 border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-gray-500 cursor-pointer"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+          <Button variant="secondary" onClick={onBack}>
+            ← Back
           </Button>
         )}
         {onCancel && (
-          <Button
-            variant="outline"
-            onClick={onCancel}
-            className="bg-red-800 border-2 border-red-600 text-red-300 hover:bg-red-700 hover:border-red-500 cursor-pointer"
-          >
+          <Button variant="destructive" onClick={onCancel}>
             Cancel
           </Button>
         )}
@@ -55,20 +46,13 @@ export function WizardNavigation({
 
       <div className="flex items-center gap-4">
         {canGoNext && onNext && (
-          <Button
-            onClick={onNext}
-            className="bg-green-500 hover:bg-green-600 text-white cursor-pointer"
-          >
+          <Button variant="default" onClick={onNext}>
             {nextText}
-            <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
         )}
         {canComplete && onComplete && (
-          <Button
-            onClick={onComplete}
-            className="bg-green-500 hover:bg-green-600 text-white cursor-pointer"
-          >
-            <Check className="h-4 w-4 mr-2" />
+          <Button variant="default" onClick={onComplete}>
+            <Check className="mr-2 h-5 w-5" />
             {completeText}
           </Button>
         )}
