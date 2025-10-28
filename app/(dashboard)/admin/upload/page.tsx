@@ -1,7 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { BeatUploadWizard } from '@/components/forms';
+import { BeatWizard } from '@/components/forms/beat-wizard';
+import { WizardMode } from '@/lib/wizard';
 
 export default function UploadBeatPage() {
   const router = useRouter();
@@ -12,7 +13,8 @@ export default function UploadBeatPage() {
   };
 
   return (
-    <BeatUploadWizard 
+    <BeatWizard 
+      mode={WizardMode.CREATE}
       onCancel={() => router.back()}
       onComplete={handleComplete}
     />

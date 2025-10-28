@@ -43,17 +43,28 @@ export interface BeatData {
   };
   imageFile: File | null;
   published: boolean;
+  // Existing file references for edit mode
+  existingFiles: {
+    mp3: string | null;
+    wav: string | null;
+    stems: string | null;
+    image: string | null;
+  };
 }
 
 export interface PackData {
+  id?: number;
   title: string;
   artist: string;
   genre: string;
   price: number;
   description: string;
   imageFile: File | null;
-  selectedBeats: BeatData[];
   published: boolean;
+  // Existing file references for edit mode
+  existingFiles: {
+    image: string | null;
+  };
 }
 
 export interface WizardData {

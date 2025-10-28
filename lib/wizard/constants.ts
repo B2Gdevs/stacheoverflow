@@ -1,5 +1,10 @@
 // Wizard system constants and enums
 
+export enum WizardMode {
+  CREATE = 'create',
+  EDIT = 'edit'
+}
+
 export enum WizardStep {
   SELECT_TYPE = 'select_type',
   BEAT_INFO = 'beat_info',

@@ -17,7 +17,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <BreadcrumbList>
                 <BreadcrumbItem className="hidden md:block">
                   <BreadcrumbLink href="/dashboard" className="text-white hover:text-green-500">
-                    StachO
+                    Stacheoverflow
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block text-gray-600" />

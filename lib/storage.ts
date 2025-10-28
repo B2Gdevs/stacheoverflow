@@ -1,11 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
-import { writeFile, readFile, unlink } from 'fs/promises';
-import { join } from 'path';
+import { writeFile, readFile, unlink, mkdir } from 'fs/promises';
+import { join, dirname } from 'path';
+import { APP_CONFIG, FileSizeUtils } from './constants';
 
-// Storage bucket names
+// Storage bucket names (using constants)
 export const STORAGE_BUCKETS = {
-  AUDIO: 'audio-files',
-  IMAGES: 'cover-images',
+  AUDIO: APP_CONFIG.STORAGE.BUCKETS.AUDIO,
+  IMAGES: APP_CONFIG.STORAGE.BUCKETS.IMAGES,
 } as const;
 
 // Check if Supabase is configured
@@ -72,6 +73,28 @@ export interface StorageResult {
   error?: string;
 }
 
+// Generate unique filename to avoid conflicts
+function generateUniqueFileName(originalName: string): string {
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 8);
+  const extension = originalName.split('.').pop();
+  const nameWithoutExt = originalName.replace(/\.[^/.]+$/, '');
+  return `${nameWithoutExt}_${timestamp}_${random}.${extension}`;
+}
+
+// Ensure directory exists
+async function ensureDirectoryExists(filePath: string): Promise<void> {
+  const dir = dirname(filePath);
+  try {
+    await mkdir(dir, { recursive: true });
+  } catch (error) {
+    // Directory might already exist, ignore error
+    if ((error as any).code !== 'EEXIST') {
+      throw error;
+    }
+  }
+}
+
 // Upload file (Supabase or local fallback)
 export async function uploadFile(
   file: Buffer, 
@@ -82,14 +105,21 @@ export async function uploadFile(
     ? STORAGE_BUCKETS.IMAGES 
     : STORAGE_BUCKETS.AUDIO;
 
-  // Use Supabase if configured
-  if (supabase && isSupabaseConfigured()) {
+  // Generate unique filename to avoid conflicts
+  const uniqueFileName = generateUniqueFileName(fileName);
+
+  // Check file size using constants
+  const fileSizeMB = FileSizeUtils.bytesToMB(file.length);
+  
+  if (FileSizeUtils.exceedsSupabaseLimit(file.length)) {
+    console.log(`File size ${FileSizeUtils.formatFileSize(file.length)} exceeds Supabase limit (${APP_CONFIG.FILE_LIMITS.SUPABASE_MAX_SIZE_MB}MB), using local storage`);
+  } else if (supabase && isSupabaseConfigured()) {
     try {
       const { data, error } = await supabase.storage
         .from(bucket)
-        .upload(fileName, file, {
+        .upload(uniqueFileName, file, {
           contentType,
-          upsert: false
+          upsert: true // Allow overwriting
         });
 
       if (error) {
@@ -109,16 +139,20 @@ export async function uploadFile(
   // Fallback to local storage
   try {
     const uploadDir = contentType.startsWith('image/') 
-      ? 'uploads/images' 
-      : 'uploads/audio';
+      ? APP_CONFIG.STORAGE.DIRECTORIES.IMAGES
+      : APP_CONFIG.STORAGE.DIRECTORIES.AUDIO;
     
-    const fullPath = join(process.cwd(), uploadDir, fileName);
+    const fullPath = join(process.cwd(), uploadDir, uniqueFileName);
+    
+    // Ensure directory exists before writing
+    await ensureDirectoryExists(fullPath);
+    
     await writeFile(fullPath, file);
 
     return {
       success: true,
-      fileName: `${uploadDir}/${fileName}`,
-      publicUrl: `/api/files/${uploadDir}/${fileName}`
+      fileName: `${uploadDir}/${uniqueFileName}`,
+      publicUrl: `/api/files/${uploadDir}/${uniqueFileName}`
     };
   } catch (error) {
     return {

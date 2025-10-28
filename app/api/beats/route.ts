@@ -79,7 +79,16 @@ export async function POST(request: Request) {
     const key = formData.get('key') as string || '';
     const description = formData.get('description') as string || '';
     const category = formData.get('category') as string || 'artist';
-    const tags = JSON.parse(formData.get('tags') as string || '[]');
+    // Parse tags with error handling
+    let tags = [];
+    try {
+      const tagsString = formData.get('tags') as string || '[]';
+      const parsedTags = JSON.parse(tagsString);
+      tags = Array.isArray(parsedTags) ? parsedTags : [];
+    } catch (error) {
+      console.error('Error parsing tags:', error);
+      tags = [];
+    }
     const published = formData.get('published') === 'true';
     
     // Handle file uploads

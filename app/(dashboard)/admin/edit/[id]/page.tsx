@@ -2,7 +2,8 @@
 
 import { useRouter, useParams } from 'next/navigation';
 import useSWR from 'swr';
-import { BeatUploadForm } from '@/components/forms';
+import { BeatWizard } from '@/components/forms/beat-wizard';
+import { WizardMode } from '@/lib/wizard';
 
 interface Beat {
   id: number;
@@ -88,8 +89,8 @@ export default function EditBeatPage() {
   }
 
   return (
-    <BeatUploadForm 
-      mode="edit" 
+    <BeatWizard 
+      mode={WizardMode.EDIT}
       initialBeat={beat}
       onCancel={() => router.back()} 
     />

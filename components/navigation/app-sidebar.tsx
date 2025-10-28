@@ -128,8 +128,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <div className="flex items-center gap-2 px-2 py-2">
-          <Music className="h-6 w-6 text-green-500" />
-          <span className="text-lg font-semibold text-white">StachO</span>
+          <div className="flex items-center">
+            <img src="/images/stacheoverflow-logo.png" alt="" className="h-8 w-8" />
+            <span className="ml-2 text-xl font-semibold text-white">
+              stache<span className="text-green-500">overflow</span>
+            </span>
+          </div>
         </div>
       </SidebarHeader>
       <SidebarContent>
