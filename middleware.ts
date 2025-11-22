@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { signToken, verifyToken } from '@/lib/auth/session';
+import { createClient } from '@supabase/supabase-js';
 
 const protectedRoutes = ['/dashboard', '/admin'];
 
@@ -9,12 +10,23 @@ export async function middleware(request: NextRequest) {
   const sessionCookie = request.cookies.get('session');
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
 
+  // Skip auth check for callback routes
+  if (pathname.startsWith('/callback/')) {
+    return NextResponse.next();
+  }
+
+  // If it's a protected route, check for legacy session cookie
+  // Note: Supabase sessions are stored client-side (localStorage) and can't be checked in middleware
+  // Client-side pages will handle Supabase auth checks
   if (isProtectedRoute && !sessionCookie) {
-    return NextResponse.redirect(new URL('/sign-in', request.url));
+    // Don't redirect - let client-side handle Supabase auth
+    // The dashboard pages will check for Supabase session and redirect if needed
+    return NextResponse.next();
   }
 
   let res = NextResponse.next();
 
+  // Handle legacy session cookie refresh
   if (sessionCookie && request.method === 'GET') {
     try {
       const parsed = await verifyToken(sessionCookie.value);
@@ -34,9 +46,7 @@ export async function middleware(request: NextRequest) {
     } catch (error) {
       console.error('Error updating session:', error);
       res.cookies.delete('session');
-      if (isProtectedRoute) {
-        return NextResponse.redirect(new URL('/sign-in', request.url));
-      }
+      // Don't redirect here - let client-side handle it
     }
   }
 

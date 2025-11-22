@@ -14,7 +14,8 @@ import {
   Heart
 } from 'lucide-react';
 import { Input, Select, Textarea } from '@/components/primitives';
-import { TagSection, CategorySelector } from '@/components/ui/enhanced-tags';
+import { CategorySelector } from '@/components/ui/enhanced-tags';
+import { TagInput } from '@/components/ui/enhanced-tag-input';
 import { BeatData, Category, useWizard } from '@/lib/wizard';
 import { CATEGORY_TAGS, GENRE_OPTIONS } from '@/lib/wizard/constants';
 
@@ -155,14 +156,16 @@ export function BeatInfoStep() {
       />
 
       {/* Tags Section */}
-      <TagSection
+      <TagInput
         title="Beat Tags"
         description="Add tags to help people find your beat"
         icon={<Star className="h-5 w-5 text-green-400" />}
-        tags={[...CATEGORY_TAGS[beat.category]]}
         selectedTags={Array.isArray(beat.tags) ? beat.tags : []}
-        onTagClick={addTag}
+        onTagAdd={addTag}
         onTagRemove={removeTag}
+        allowCreation={true}
+        placeholder="Search existing tags or create new ones..."
+        maxTags={20}
       />
     </div>
   );

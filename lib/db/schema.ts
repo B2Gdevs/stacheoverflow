@@ -5,6 +5,7 @@ import {
   text,
   timestamp,
   integer,
+  primaryKey,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -14,6 +15,7 @@ export const users = pgTable('users', {
   email: varchar('email', { length: 255 }).notNull().unique(),
   passwordHash: text('password_hash').notNull(),
   role: varchar('role', { length: 20 }).notNull().default('member'),
+  supabaseAuthUserId: varchar('supabase_auth_user_id', { length: 255 }),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
   deletedAt: timestamp('deleted_at'),
@@ -314,3 +316,47 @@ export type ApiLog = typeof apiLogs.$inferSelect;
 export type NewApiLog = typeof apiLogs.$inferInsert;
 export type StripeLog = typeof stripeLogs.$inferSelect;
 export type NewStripeLog = typeof stripeLogs.$inferInsert;
+
+// Tags table for metadata and management
+export const tags = pgTable('tags', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 50 }).notNull().unique(),
+  description: text('description'),
+  category: varchar('category', { length: 50 }),
+  usageCount: integer('usage_count').default(0),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// Junction table for many-to-many relationship between beats and tags
+export const beatTags = pgTable('beat_tags', {
+  beatId: integer('beat_id').references(() => beats.id, { onDelete: 'cascade' }),
+  tagId: integer('tag_id').references(() => tags.id, { onDelete: 'cascade' }),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.beatId, table.tagId] }),
+}));
+
+export type Tag = typeof tags.$inferSelect;
+export type NewTag = typeof tags.$inferInsert;
+export type BeatTag = typeof beatTags.$inferSelect;
+export type NewBeatTag = typeof beatTags.$inferInsert;
+
+// Social connections table for OAuth providers (Spotify, Google, etc.)
+export const socialConnections = pgTable('social_connections', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  platform: varchar('platform', { length: 50 }).notNull(), // 'spotify', 'google', etc.
+  platformUserId: varchar('platform_user_id', { length: 255 }), // Spotify user ID
+  accessToken: text('access_token'), // Encrypted access token
+  refreshToken: text('refresh_token'), // Encrypted refresh token
+  expiresAt: timestamp('expires_at'), // Token expiration
+  scope: text('scope'), // OAuth scopes
+  profileData: text('profile_data'), // JSON string of user profile
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export type SocialConnection = typeof socialConnections.$inferSelect;
+export type NewSocialConnection = typeof socialConnections.$inferInsert;

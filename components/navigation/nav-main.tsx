@@ -28,10 +28,15 @@ export function NavMain({
     isActive?: boolean
   }[]
 }) {
+  // Filter out any duplicate items by title
+  const uniqueItems = items.filter((item, index, self) => 
+    index === self.findIndex((t) => t.title === item.title)
+  )
+
   return (
     <SidebarGroup>
       <SidebarMenu>
-        {items.map((item) => (
+        {uniqueItems.map((item) => (
           <SidebarMenuItem key={item.title}>
             <SidebarMenuButton asChild tooltip={item.title}>
               <a href={item.url}>

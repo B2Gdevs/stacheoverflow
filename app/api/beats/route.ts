@@ -4,11 +4,44 @@ import { beats, type NewBeat } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { getUser } from '@/lib/db/queries';
 import { deleteFile, uploadFile } from '@/lib/storage';
+import { syncTagsForBeat } from '@/lib/db/tag-queries';
+import { createClient } from '@/utils/supabase/server';
+import { users } from '@/lib/db/schema';
+import { sql, isNull } from 'drizzle-orm';
+
+async function getCurrentUser() {
+  // Try Supabase session first (for OAuth users)
+  try {
+    const supabase = await createClient();
+    const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+    
+    if (supabaseUser?.email) {
+      const normalizedEmail = supabaseUser.email.toLowerCase().trim();
+      const [dbUser] = await db
+        .select()
+        .from(users)
+        .where(
+          and(
+            sql`LOWER(${users.email}) = ${normalizedEmail}`,
+            isNull(users.deletedAt)
+          )
+        )
+        .limit(1);
+      
+      if (dbUser) return dbUser;
+    }
+  } catch (error) {
+    console.error('Error getting user from Supabase:', error);
+  }
+  
+  // Fall back to legacy session
+  return await getUser();
+}
 
 export async function GET() {
   try {
     // Check if user is admin to see all beats (including drafts)
-    const user = await getUser();
+    const user = await getCurrentUser();
     const isAdmin = user?.role === 'admin';
     
     const allBeats = await db
@@ -58,7 +91,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     // Check if user is authenticated and is admin
-    const user = await getUser();
+    const user = await getCurrentUser();
     if (!user || user.role !== 'admin') {
       return NextResponse.json(
         { error: 'Unauthorized. Admin access required.' },
@@ -188,6 +221,16 @@ export async function POST(request: Request) {
       .values(newBeat)
       .returning();
 
+    // Sync tags to the tags table
+    if (tags && tags.length > 0) {
+      try {
+        await syncTagsForBeat(createdBeat.id, tags);
+      } catch (error) {
+        console.error('Failed to sync tags for beat:', error);
+        // Don't fail the request if tag sync fails
+      }
+    }
+
     return NextResponse.json({ 
       success: true, 
       beat: createdBeat 
@@ -252,7 +295,7 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   try {
     // Check if user is authenticated and is admin
-    const user = await getUser();
+    const user = await getCurrentUser();
     if (!user || user.role !== 'admin') {
       return NextResponse.json(
         { error: 'Unauthorized. Admin access required.' },

@@ -193,10 +193,15 @@ export function BeatWizard({ mode, initialBeat, onCancel, onComplete }: BeatWiza
   // Convert existing beat data to wizard format
   const convertBeatToWizardData = (beat: any): WizardData => {
     console.log('🎵 BeatWizard: Converting beat to wizard data:', beat);
+    console.log('🎵 BeatWizard: beat.isPack value:', beat.isPack, 'type:', typeof beat.isPack);
+    console.log('🎵 BeatWizard: beat.packId value:', beat.packId, 'type:', typeof beat.packId);
     
     // Determine if this is a pack or single beat
-    const isPack = beat.isPack || beat.packId;
+    // isPack should be 1 for packs, 0 for single beats
+    // packId should only exist for individual beats within a pack
+    const isPack = beat.isPack === 1 || beat.isPack === true;
     console.log('🎵 BeatWizard: Is pack?', isPack);
+    console.log('🎵 BeatWizard: UploadType will be:', isPack ? 'PACK' : 'SINGLE');
     
     const wizardData = {
       uploadType: isPack ? UploadType.PACK : UploadType.SINGLE,
@@ -303,11 +308,14 @@ export function BeatWizard({ mode, initialBeat, onCancel, onComplete }: BeatWiza
   const getInitialStep = () => {
     if (mode === WizardMode.EDIT) {
       // Start at the info step (step 2) when editing, but keep all steps visible
-      return initialData.uploadType === UploadType.SINGLE 
+      const step = initialData.uploadType === UploadType.SINGLE 
         ? WizardStep.BEAT_INFO 
         : WizardStep.PACK_INFO;
+      console.log('🎵 BeatWizard: Initial step for edit mode:', step, 'uploadType:', initialData.uploadType);
+      return step;
     } else {
       // Start with type selection when creating
+      console.log('🎵 BeatWizard: Initial step for create mode:', WizardStep.SELECT_TYPE);
       return WizardStep.SELECT_TYPE;
     }
   };

@@ -1,10 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUser } from '@/lib/db/queries';
 import { db } from '@/lib/db/drizzle';
-import { beatPacks, beats } from '@/lib/db/schema';
+import { beatPacks, beats, users } from '@/lib/db/schema';
 import { withLogging } from '@/lib/middleware/logging';
-import { eq, desc, inArray } from 'drizzle-orm';
+import { eq, desc, inArray, and, sql, isNull } from 'drizzle-orm';
 import { uploadFile } from '@/lib/storage';
+import { createClient } from '@/utils/supabase/server';
+
+async function getCurrentUser() {
+  // Try Supabase session first (for OAuth users)
+  try {
+    const supabase = await createClient();
+    const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+    
+    if (supabaseUser?.email) {
+      const normalizedEmail = supabaseUser.email.toLowerCase().trim();
+      const [dbUser] = await db
+        .select()
+        .from(users)
+        .where(
+          and(
+            sql`LOWER(${users.email}) = ${normalizedEmail}`,
+            isNull(users.deletedAt)
+          )
+        )
+        .limit(1);
+      
+      if (dbUser) return dbUser;
+    }
+  } catch (error) {
+    console.error('Error getting user from Supabase:', error);
+  }
+  
+  // Fall back to legacy session
+  return await getUser();
+}
 
 export async function GET(request: NextRequest) {
   return withLogging(request, async (req) => {
@@ -13,7 +43,7 @@ export async function GET(request: NextRequest) {
       const limit = parseInt(searchParams.get('limit') || '50');
       const offset = parseInt(searchParams.get('offset') || '0');
 
-      const user = await getUser();
+      const user = await getCurrentUser();
       const isAdmin = user?.role === 'admin';
 
       // Get beat packs with their beats
@@ -82,7 +112,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   return withLogging(request, async (req) => {
     try {
-      const user = await getUser();
+      const user = await getCurrentUser();
       if (!user || user.role !== 'admin') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import {
   BadgeCheck,
@@ -37,8 +37,20 @@ import {
 import { signOut } from "@/app/(login)/actions"
 import useSWR, { mutate } from "swr"
 import { User } from "@/lib/db/schema"
+import { supabase } from "@/lib/supabase"
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json())
+const fetcher = async (url: string) => {
+  // Get the Supabase session token to send to the server
+  const { data: { session } } = await supabase.auth.getSession();
+  const headers: HeadersInit = {};
+  
+  if (session?.access_token) {
+    headers['Authorization'] = `Bearer ${session.access_token}`;
+  }
+  
+  const res = await fetch(url, { headers });
+  return res.json();
+}
 
 export function NavUser({
   user,
@@ -51,17 +63,63 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar()
   const router = useRouter()
-  const { data: currentUser, error } = useSWR<User>('/api/user', fetcher)
+  const [supabaseUser, setSupabaseUser] = useState<any>(null);
+  const { data: currentUser, error, mutate: mutateUser } = useSWR<User>('/api/user', fetcher)
+
+  // Check Supabase session on client side
+  useEffect(() => {
+    const checkSupabaseSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setSupabaseUser(session.user);
+        mutateUser(); // Trigger API refetch to link accounts
+      }
+    };
+
+    checkSupabaseSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setSupabaseUser(session.user);
+        mutateUser();
+      } else {
+        setSupabaseUser(null);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [mutateUser]);
 
   async function handleSignOut() {
+    // Sign out from Supabase if logged in via OAuth
+    if (supabaseUser) {
+      await supabase.auth.signOut();
+    }
     await signOut()
-    mutate('/api/user')
+    mutateUser()
     router.push('/')
   }
 
-  // Check if user is authenticated
-  const isAuthenticated = currentUser && !error
-  const displayUser = isAuthenticated ? currentUser : user
+  // Check if user is authenticated (either from API or Supabase)
+  const isAuthenticated = !!(currentUser && !error) || !!supabaseUser
+  
+  // Determine which user to display
+  const displayUser = isAuthenticated && currentUser 
+    ? currentUser 
+    : supabaseUser 
+      ? {
+          name: supabaseUser.user_metadata?.full_name || 
+                supabaseUser.user_metadata?.name || 
+                supabaseUser.email?.split('@')[0] || 
+                "User",
+          email: supabaseUser.email || user.email,
+          avatar: supabaseUser.user_metadata?.avatar_url || user.avatar,
+        }
+      : user
+  
   const isGuest = !isAuthenticated
 
   return (
@@ -78,7 +136,7 @@ export function NavUser({
                 <AvatarFallback className="rounded-lg">
                   {isGuest ? 'G' : displayUser.email
                     .split(' ')
-                    .map((n) => n[0])
+                    .map((n: string) => n[0])
                     .join('')}
                 </AvatarFallback>
               </Avatar>
@@ -107,7 +165,7 @@ export function NavUser({
                   <AvatarFallback className="rounded-lg">
                     {isGuest ? 'G' : displayUser.email
                       .split(' ')
-                      .map((n) => n[0])
+                      .map((n: string) => n[0])
                       .join('')}
                   </AvatarFallback>
                 </Avatar>

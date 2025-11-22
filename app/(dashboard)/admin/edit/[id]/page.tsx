@@ -15,6 +15,10 @@ interface Beat {
   bpm: number | null;
   key: string | null;
   description: string | null;
+  category?: string;
+  tags?: string[];
+  isPack?: boolean;
+  packId?: number | null;
   audioFiles: {
     mp3: string | null;
     wav: string | null;

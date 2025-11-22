@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import { getUser } from '@/lib/db/queries';
 import { uploadFile } from '@/lib/storage';
 import { APP_CONFIG, FileSizeUtils } from '@/lib/constants';
+import { syncTagsForBeat } from '@/lib/db/tag-queries';
 
 export async function GET(
   request: NextRequest,
@@ -41,7 +42,11 @@ export async function GET(
       bpm: beatData.bpm,
       key: beatData.key,
       description: beatData.description,
+      category: beatData.category,
+      tags: beatData.tags || [],
       published: beatData.published === 1,
+      isPack: beatData.isPack === 1,
+      packId: beatData.packId || null,
       audioFiles: {
         mp3: beatData.audioFileMp3,
         wav: beatData.audioFileWav,
@@ -240,6 +245,16 @@ export async function PUT(
       .update(beats)
       .set(updateData)
       .where(eq(beats.id, beatId));
+
+    // Sync tags to the tags table
+    if (tags && tags.length > 0) {
+      try {
+        await syncTagsForBeat(beatId, tags);
+      } catch (error) {
+        console.error('Failed to sync tags for beat:', error);
+        // Don't fail the request if tag sync fails
+      }
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

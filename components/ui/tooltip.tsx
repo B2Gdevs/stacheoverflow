@@ -127,10 +127,32 @@ export const TooltipProvider = ({ children }: { children: React.ReactNode }) => 
   return <>{children}</>;
 };
 
-export const TooltipTrigger = ({ children, ...props }: { children: React.ReactNode; [key: string]: any }) => {
+export const TooltipTrigger = ({
+  children,
+  asChild,
+  ...props
+}: {
+  children: React.ReactNode;
+  asChild?: boolean;
+  [key: string]: any;
+}) => {
+  if (asChild && React.isValidElement(children)) {
+    return React.cloneElement(children, props);
+  }
   return <div {...props}>{children}</div>;
 };
 
-export const TooltipContent = ({ children, ...props }: { children: React.ReactNode; [key: string]: any }) => {
+export const TooltipContent = ({
+  children,
+  asChild,
+  ...props
+}: {
+  children: React.ReactNode;
+  asChild?: boolean;
+  [key: string]: any;
+}) => {
+  if (asChild && React.isValidElement(children)) {
+    return React.cloneElement(children, props);
+  }
   return <div {...props}>{children}</div>;
 };

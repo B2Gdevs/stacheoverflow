@@ -8,10 +8,22 @@ import useSWR from 'swr';
 import { useRouter } from 'next/navigation';
 import { useAudio, PlayButton } from '@/lib/audio';
 import { GlobalAudioPlayer } from '@/components/audio';
+import { supabase } from '@/lib/supabase';
 
 const genres = ["All", "Hip Hop", "Trap", "R&B", "Pop", "Electronic", "Rock"];
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = async (url: string) => {
+  // Get the Supabase session token to send to the server
+  const { data: { session } } = await supabase.auth.getSession();
+  const headers: HeadersInit = {};
+  
+  if (session?.access_token) {
+    headers['Authorization'] = `Bearer ${session.access_token}`;
+  }
+  
+  const res = await fetch(url, { headers });
+  return res.json();
+};
 
 export function DashboardContent() {
   const router = useRouter();

@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useEffect, useState } from "react"
 import {
   Music,
   Home,
@@ -29,14 +30,69 @@ import {
 } from "@/components/ui/sidebar"
 import useSWR from "swr"
 import { User as UserType } from "@/lib/db/schema"
+import { supabase } from "@/lib/supabase"
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json())
+const fetcher = async (url: string) => {
+  // Get the Supabase session token to send to the server
+  const { data: { session } } = await supabase.auth.getSession();
+  const headers: HeadersInit = {};
+  
+  if (session?.access_token) {
+    headers['Authorization'] = `Bearer ${session.access_token}`;
+  }
+  
+  const res = await fetch(url, { headers });
+  return res.json();
+}
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { data: currentUser, error } = useSWR<UserType>('/api/user', fetcher)
+  const [supabaseUser, setSupabaseUser] = useState<any>(null);
+  const [isLoadingSession, setIsLoadingSession] = useState(true);
+  const { data: currentUser, error, mutate } = useSWR<UserType>('/api/user', fetcher);
 
-  // Check if user is authenticated
-  const isAuthenticated = currentUser && !error
+  // Check Supabase session on client side
+  useEffect(() => {
+    const checkSupabaseSession = async () => {
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          setSupabaseUser(session.user);
+          // Trigger a refetch of the user API to link accounts
+          mutate();
+        } else {
+          setSupabaseUser(null);
+        }
+      } catch (err) {
+        console.error('🔐 Sidebar: Error checking session:', err);
+        setSupabaseUser(null);
+      } finally {
+        setIsLoadingSession(false);
+      }
+    };
+
+    checkSupabaseSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setSupabaseUser(session.user);
+        mutate();
+      } else {
+        setSupabaseUser(null);
+      }
+      setIsLoadingSession(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [mutate]);
+
+  // Check if user is authenticated (either from API or Supabase)
+  // If we have a supabaseUser, we're authenticated immediately
+  // Otherwise, wait for session loading to complete before checking
+  const isAuthenticated = !!supabaseUser || (!isLoadingSession && !!(currentUser && !error))
 
   // Base navigation items for authenticated users
   const baseNavItems = [
@@ -104,23 +160,43 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Combine navigation items based on authentication and user role
   let navItems = []
   if (isAuthenticated) {
-    navItems = currentUser.role === 'admin' 
+    // Wait for user data to load before determining role
+    const userRole = currentUser?.role || 'member';
+    navItems = userRole === 'admin' 
       ? [...baseNavItems, ...adminNavItems]
       : baseNavItems
   } else {
     navItems = authNavItems
   }
 
-  const data = {
-    user: isAuthenticated ? {
-      name: currentUser.name || "User",
-      email: currentUser.email,
-      avatar: "/avatars/stacho.jpg",
-    } : {
+  // Get user info from either API user or Supabase user
+  const getUserInfo = () => {
+    if (currentUser && !error) {
+      return {
+        name: currentUser.name || "User",
+        email: currentUser.email,
+        avatar: "/avatars/stacho.jpg",
+      };
+    }
+    if (supabaseUser) {
+      return {
+        name: supabaseUser.user_metadata?.full_name || 
+              supabaseUser.user_metadata?.name || 
+              supabaseUser.email?.split('@')[0] || 
+              "User",
+        email: supabaseUser.email || "Not logged in",
+        avatar: supabaseUser.user_metadata?.avatar_url || "/avatars/stacho.jpg",
+      };
+    }
+    return {
       name: "Guest",
       email: "Not logged in",
       avatar: "/avatars/guest.jpg",
-    },
+    };
+  };
+
+  const data = {
+    user: getUserInfo(),
     navMain: navItems,
   }
 
