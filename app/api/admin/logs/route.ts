@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getUser } from '@/lib/db/queries';
 import { Logger } from '@/lib/logging';
 import { withLogging } from '@/lib/middleware/logging';
+import { withCache } from '@/lib/cache/cache-middleware';
 
 export async function GET(request: NextRequest) {
-  return withLogging(request, async (req) => {
+  return withCache(request, async () => {
+    return withLogging(request, async (req) => {
     try {
       console.log('Admin logs API called');
       
@@ -25,13 +27,14 @@ export async function GET(request: NextRequest) {
       const endTime = Date.now();
       console.log('Found logs:', logs.length, 'in', endTime - startTime, 'ms');
 
-      return NextResponse.json(logs);
-    } catch (error) {
-      console.error('Error fetching logs:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch logs' },
-        { status: 500 }
-      );
-    }
+        return NextResponse.json(logs);
+      } catch (error) {
+        console.error('Error fetching logs:', error);
+        return NextResponse.json(
+          { error: 'Failed to fetch logs' },
+          { status: 500 }
+        );
+      }
+    });
   });
 }

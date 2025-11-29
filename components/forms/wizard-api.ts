@@ -1,4 +1,6 @@
 import { BeatData, PackData, WizardMode } from '@/lib/wizard';
+import { invalidateBeatsCache, invalidateCache } from '@/lib/swr/cache';
+import { CACHE_KEYS } from '@/lib/swr/config';
 
 // API submission functions
 export async function submitSingleBeat(beat: BeatData, mode: WizardMode) {
@@ -64,6 +66,13 @@ export async function submitSingleBeat(beat: BeatData, mode: WizardMode) {
 
   const result = await response.json();
   console.log('🎵 submitSingleBeat: Success response:', result);
+  
+  // Invalidate beats cache after mutation
+  await invalidateBeatsCache();
+  if (beat.id) {
+    await invalidateCache(CACHE_KEYS.BEAT(beat.id.toString()));
+  }
+  
   return result;
 }
 
@@ -111,5 +120,12 @@ export async function submitBeatPack(pack: PackData, selectedBeats: BeatData[], 
 
   const result = await response.json();
   console.log('🎵 submitBeatPack: Success response:', result);
+  
+  // Invalidate beat packs cache after mutation
+  await invalidateBeatsCache();
+  if (pack.id) {
+    await invalidateCache(CACHE_KEYS.BEAT_PACK(pack.id.toString()));
+  }
+  
   return result;
 }

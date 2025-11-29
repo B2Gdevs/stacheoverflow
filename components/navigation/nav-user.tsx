@@ -38,19 +38,7 @@ import { signOut } from "@/app/(login)/actions"
 import useSWR, { mutate } from "swr"
 import { User } from "@/lib/db/schema"
 import { supabase } from "@/lib/supabase"
-
-const fetcher = async (url: string) => {
-  // Get the Supabase session token to send to the server
-  const { data: { session } } = await supabase.auth.getSession();
-  const headers: HeadersInit = {};
-  
-  if (session?.access_token) {
-    headers['Authorization'] = `Bearer ${session.access_token}`;
-  }
-  
-  const res = await fetch(url, { headers });
-  return res.json();
-}
+import { fetcher, CACHE_KEYS } from "@/lib/swr/config"
 
 export function NavUser({
   user,
@@ -64,7 +52,7 @@ export function NavUser({
   const { isMobile } = useSidebar()
   const router = useRouter()
   const [supabaseUser, setSupabaseUser] = useState<any>(null);
-  const { data: currentUser, error, mutate: mutateUser } = useSWR<User>('/api/user', fetcher)
+  const { data: currentUser, error, mutate: mutateUser } = useSWR<User>(CACHE_KEYS.USER, fetcher)
 
   // Check Supabase session on client side
   useEffect(() => {
@@ -72,7 +60,8 @@ export function NavUser({
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         setSupabaseUser(session.user);
-        mutateUser(); // Trigger API refetch to link accounts
+        // Don't mutate - SWR will handle caching and deduplication
+        // Only mutate if we need to force a refresh
       }
     };
 
@@ -82,7 +71,10 @@ export function NavUser({
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setSupabaseUser(session.user);
-        mutateUser();
+        // Only mutate on sign in/out, not on every auth state change
+        if (_event === 'SIGNED_IN' || _event === 'SIGNED_OUT') {
+          mutateUser();
+        }
       } else {
         setSupabaseUser(null);
       }

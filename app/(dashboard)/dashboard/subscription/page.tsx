@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Crown, Download, Calendar, CreditCard, CheckCircle, XCircle } from 'lucide-react';
-import useSWR from 'swr';
+import { useSubscriptions, useUserSubscription } from '@/lib/swr/hooks';
 
 interface SubscriptionPlan {
   id: number;
@@ -35,8 +35,8 @@ interface UserSubscription {
 export default function SubscriptionPage() {
   const [isLoading, setIsLoading] = useState(false);
 
-  const { data: plans, error: plansError } = useSWR<SubscriptionPlan[]>('/api/subscriptions');
-  const { data: userSubscription, error: subscriptionError } = useSWR<UserSubscription>('/api/user/subscription');
+  const { subscriptions: plans, isError: plansError } = useSubscriptions();
+  const { subscription: userSubscription, isError: subscriptionError } = useUserSubscription();
 
   const handleSubscribe = async (planId: number) => {
     setIsLoading(true);

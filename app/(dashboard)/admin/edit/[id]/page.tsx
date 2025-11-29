@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
-import useSWR from 'swr';
+import { useBeat } from '@/lib/swr/hooks';
 import { BeatWizard } from '@/components/forms/beat-wizard';
 import { WizardMode } from '@/lib/wizard';
 
@@ -35,22 +35,10 @@ export default function EditBeatPage() {
   
   console.log('EditBeatPage - beatId:', beatId);
 
-  // Fetch the beat data
-  const { data: beat, error: fetchError, mutate } = useSWR<Beat>(
-    beatId ? `/api/beats/${beatId}` : null,
-    (url: string) => {
-      console.log('Fetching beat from:', url);
-      return fetch(url).then(res => {
-        console.log('Beat fetch response:', res.status, res.statusText);
-        if (!res.ok) {
-          throw new Error(`Failed to fetch beat: ${res.status} ${res.statusText}`);
-        }
-        return res.json();
-      });
-    }
-  );
+  // Fetch the beat data using cached hook
+  const { beat, isError, isLoading, refresh } = useBeat(beatId || null);
 
-  if (fetchError) {
+  if (isError) {
     return (
       <div className="min-h-screen bg-black text-white p-8">
         <div className="max-w-4xl mx-auto">
@@ -64,14 +52,14 @@ export default function EditBeatPage() {
             <h1 className="text-3xl font-bold">Edit Beat</h1>
           </div>
           <div className="bg-gray-900 border border-gray-700 rounded-lg p-8">
-            <p className="text-red-400">Error loading beat: {fetchError.message}</p>
+            <p className="text-red-400">Error loading beat</p>
           </div>
         </div>
       </div>
     );
   }
 
-  if (!beat) {
+  if (isLoading || !beat) {
     return (
       <div className="min-h-screen bg-black text-white p-8">
         <div className="max-w-4xl mx-auto">

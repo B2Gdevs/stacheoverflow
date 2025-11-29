@@ -4,6 +4,7 @@ import { subscriptionPlans } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { getUser } from '@/lib/db/queries';
 import { withLogging } from '@/lib/middleware/logging';
+import { cacheInvalidation } from '@/lib/cache/api-cache';
 
 export async function PUT(
   request: NextRequest,
@@ -55,6 +56,10 @@ export async function PUT(
         .set(updateData)
         .where(eq(subscriptionPlans.id, planId));
 
+      // Invalidate cache
+      cacheInvalidation.adminSubscriptions();
+      cacheInvalidation.subscriptions();
+
       return NextResponse.json({ success: true });
     } catch (error) {
       console.error('Error updating subscription plan:', error);
@@ -99,6 +104,10 @@ export async function DELETE(
     await db
       .delete(subscriptionPlans)
       .where(eq(subscriptionPlans.id, planId));
+
+    // Invalidate cache
+    cacheInvalidation.adminSubscriptions();
+    cacheInvalidation.subscriptions();
 
     return NextResponse.json({ success: true });
   } catch (error) {

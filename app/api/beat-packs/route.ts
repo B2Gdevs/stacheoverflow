@@ -4,8 +4,10 @@ import { db } from '@/lib/db/drizzle';
 import { beatPacks, beats, users } from '@/lib/db/schema';
 import { withLogging } from '@/lib/middleware/logging';
 import { eq, desc, inArray, and, sql, isNull } from 'drizzle-orm';
-import { uploadFile } from '@/lib/storage';
+import { uploadFile, STORAGE_BUCKETS } from '@/lib/storage';
 import { createClient } from '@/utils/supabase/server';
+import { withCache } from '@/lib/cache/cache-middleware';
+import { invalidateBeatPacksCache } from '@/lib/cache/api-cache';
 
 async function getCurrentUser() {
   // Try Supabase session first (for OAuth users)
@@ -37,14 +39,16 @@ async function getCurrentUser() {
 }
 
 export async function GET(request: NextRequest) {
-  return withLogging(request, async (req) => {
-    try {
-      const { searchParams } = new URL(req.url);
-      const limit = parseInt(searchParams.get('limit') || '50');
-      const offset = parseInt(searchParams.get('offset') || '0');
-
-      const user = await getCurrentUser();
-      const isAdmin = user?.role === 'admin';
+  // Get user for cache key
+  const user = await getCurrentUser();
+  const isAdmin = user?.role === 'admin';
+  
+  return withCache(request, async () => {
+    return withLogging(request, async (req) => {
+      try {
+        const { searchParams } = new URL(req.url);
+        const limit = parseInt(searchParams.get('limit') || '50');
+        const offset = parseInt(searchParams.get('offset') || '0');
 
       // Get beat packs with their beats
       const packs = await db
@@ -59,6 +63,38 @@ export async function GET(request: NextRequest) {
         .limit(limit)
         .offset(offset);
 
+      // Generate signed URLs for images (valid for 1 hour)
+      const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
+      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      const supabaseAdmin = serviceKey ? createSupabaseClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        serviceKey,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+      ) : null;
+
+      // Helper to generate signed URL for an image
+      const generateImageUrl = async (imageFile: string | null): Promise<string | null> => {
+        if (!imageFile || !supabaseAdmin || !imageFile.includes('/')) return null;
+        
+        try {
+          const [bucket, ...fileParts] = imageFile.split('/');
+          const fileName = fileParts.join('/');
+          
+          if (bucket === STORAGE_BUCKETS.IMAGES && fileName) {
+            const { data, error } = await supabaseAdmin.storage
+              .from(bucket)
+              .createSignedUrl(fileName, 3600); // 1 hour
+            
+            if (!error && data) {
+              return data.signedUrl;
+            }
+          }
+        } catch (error) {
+          console.error(`Error generating signed URL for ${imageFile}:`, error);
+        }
+        return null;
+      };
+
       // Get beats for each pack
       const packsWithBeats = await Promise.all(
         packs.map(async (pack) => {
@@ -68,44 +104,56 @@ export async function GET(request: NextRequest) {
             .where(eq(beats.packId, pack.id));
           
           // Format beats like the beats API does
-          const formattedBeats = packBeats.map(beat => ({
-            id: beat.id,
-            title: beat.title,
-            artist: beat.artist,
-            genre: beat.genre,
-            price: beat.price / 100, // Convert from cents to dollars
-            duration: beat.duration,
-            bpm: beat.bpm,
-            key: beat.key,
-            description: beat.description,
-            category: beat.category,
-            tags: beat.tags || [],
-            imageFile: beat.imageFile,
-            published: beat.published === 1,
-            audioFiles: {
-              mp3: beat.audioFileMp3,
-              wav: beat.audioFileWav,
-              stems: beat.audioFileStems
-            }
+          const formattedBeats = await Promise.all(packBeats.map(async (beat) => {
+            const imageUrl = await generateImageUrl(beat.imageFile);
+            
+            return {
+              id: beat.id,
+              title: beat.title,
+              artist: beat.artist,
+              genre: beat.genre,
+              price: beat.price / 100, // Convert from cents to dollars
+              duration: beat.duration,
+              bpm: beat.bpm,
+              key: beat.key,
+              description: beat.description,
+              category: beat.category,
+              tags: beat.tags || [],
+              imageFile: beat.imageFile,
+              imageUrl, // Include signed URL
+              published: beat.published === 1,
+              audioFiles: {
+                mp3: beat.audioFileMp3,
+                wav: beat.audioFileWav,
+                stems: beat.audioFileStems
+              }
+            };
           }));
+          
+          const packImageUrl = await generateImageUrl(pack.imageFile);
           
           return {
             ...pack,
             price: pack.price / 100, // Convert pack price from cents to dollars
             published: pack.published === 1,
+            imageUrl: packImageUrl, // Include pack image signed URL
             beats: formattedBeats
           };
         })
       );
 
-      return NextResponse.json(packsWithBeats);
-    } catch (error) {
-      console.error('Error fetching beat packs:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch beat packs' },
-        { status: 500 }
-      );
-    }
+        return NextResponse.json(packsWithBeats);
+      } catch (error) {
+        console.error('Error fetching beat packs:', error);
+        return NextResponse.json(
+          { error: 'Failed to fetch beat packs' },
+          { status: 500 }
+        );
+      }
+    });
+  }, {
+    userId: user?.id,
+    isAdmin,
   });
 }
 
@@ -175,6 +223,9 @@ export async function POST(request: NextRequest) {
           })
           .where(inArray(beats.id, selectedBeats));
       }
+
+      // Invalidate cache after creating pack
+      invalidateBeatPacksCache();
 
       return NextResponse.json(newPack[0]);
     } catch (error) {

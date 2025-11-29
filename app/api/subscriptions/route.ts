@@ -5,25 +5,29 @@ import { eq } from 'drizzle-orm';
 import { getUser } from '@/lib/db/queries';
 import { createSubscriptionCheckout } from '@/lib/stripe/subscriptions';
 import { withLogging } from '@/lib/middleware/logging';
+import { withCache } from '@/lib/cache/cache-middleware';
+import { cacheInvalidation } from '@/lib/cache/api-cache';
 
 export async function GET(request: NextRequest) {
-  return withLogging(request, async (req) => {
-    try {
-      // Get all active subscription plans
-      const plans = await db
-        .select()
-        .from(subscriptionPlans)
-        .where(eq(subscriptionPlans.isActive, 1))
-        .orderBy(subscriptionPlans.price);
+  return withCache(request, async () => {
+    return withLogging(request, async (req) => {
+      try {
+        // Get all active subscription plans
+        const plans = await db
+          .select()
+          .from(subscriptionPlans)
+          .where(eq(subscriptionPlans.isActive, 1))
+          .orderBy(subscriptionPlans.price);
 
-      return NextResponse.json(plans);
-    } catch (error) {
-      console.error('Error fetching subscription plans:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch subscription plans' },
-        { status: 500 }
-      );
-    }
+        return NextResponse.json(plans);
+      } catch (error) {
+        console.error('Error fetching subscription plans:', error);
+        return NextResponse.json(
+          { error: 'Failed to fetch subscription plans' },
+          { status: 500 }
+        );
+      }
+    });
   });
 }
 
@@ -54,6 +58,9 @@ export async function POST(request: NextRequest) {
         successUrl,
         cancelUrl,
       });
+
+      // Invalidate subscriptions cache after creating checkout
+      cacheInvalidation.subscriptions();
 
       return NextResponse.json({ sessionId: session.id, url: session.url });
     } catch (error) {

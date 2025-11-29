@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db/drizzle';
 import { beats, type NewBeat } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -8,6 +8,9 @@ import { syncTagsForBeat } from '@/lib/db/tag-queries';
 import { createClient } from '@/utils/supabase/server';
 import { users } from '@/lib/db/schema';
 import { sql, isNull } from 'drizzle-orm';
+import { withCache } from '@/lib/cache/cache-middleware';
+import { invalidateBeatsCache } from '@/lib/cache/api-cache';
+import { STORAGE_BUCKETS } from '@/lib/storage';
 
 async function getCurrentUser() {
   // Try Supabase session first (for OAuth users)
@@ -38,54 +41,94 @@ async function getCurrentUser() {
   return await getUser();
 }
 
-export async function GET() {
-  try {
-    // Check if user is admin to see all beats (including drafts)
-    const user = await getCurrentUser();
-    const isAdmin = user?.role === 'admin';
-    
-    const allBeats = await db
-      .select()
-      .from(beats)
-      .where(
-        isAdmin 
-          ? eq(beats.isActive, 1) // Admins see all active beats (published + drafts)
-          : and(eq(beats.isActive, 1), eq(beats.published, 1)) // Regular users see only published beats
-      )
-      .orderBy(beats.createdAt);
+export async function GET(request: NextRequest) {
+  // Get user once for cache key and query
+  const user = await getCurrentUser();
+  const isAdmin = user?.role === 'admin';
+  
+  return withCache(request, async () => {
+    try {
+      const allBeats = await db
+        .select()
+        .from(beats)
+        .where(
+          isAdmin 
+            ? eq(beats.isActive, 1) // Admins see all active beats (published + drafts)
+            : and(eq(beats.isActive, 1), eq(beats.published, 1)) // Regular users see only published beats
+        )
+        .orderBy(beats.createdAt);
 
-    // Format the beats for the frontend
-    const formattedBeats = allBeats.map(beat => ({
-      id: beat.id,
-      title: beat.title,
-      artist: beat.artist,
-      genre: beat.genre,
-      price: beat.price / 100, // Convert from cents to dollars
-      duration: beat.duration,
-      bpm: beat.bpm,
-      key: beat.key,
-      description: beat.description,
-      category: beat.category,
-      tags: beat.tags || [],
-      imageFile: beat.imageFile,
-      published: beat.published === 1,
-      audioFiles: {
-        mp3: beat.audioFileMp3,
-        wav: beat.audioFileWav,
-        stems: beat.audioFileStems
-      },
-      createdAt: beat.createdAt,
-      updatedAt: beat.updatedAt
-    }));
+      // Generate signed URLs for images (valid for 1 hour)
+      const supabase = await createClient();
+      const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
+      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      const supabaseAdmin = serviceKey ? createSupabaseClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        serviceKey,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+      ) : null;
 
-    return NextResponse.json({ beats: formattedBeats });
-  } catch (error) {
-    console.error('Error fetching beats:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch beats' },
-      { status: 500 }
-    );
-  }
+      // Format the beats for the frontend
+      const formattedBeats = await Promise.all(allBeats.map(async (beat) => {
+        let imageUrl = null;
+        
+        // Generate signed URL for image if it exists
+        if (beat.imageFile && supabaseAdmin && beat.imageFile.includes('/')) {
+          try {
+            const [bucket, ...fileParts] = beat.imageFile.split('/');
+            const fileName = fileParts.join('/');
+            
+            if (bucket === STORAGE_BUCKETS.IMAGES && fileName) {
+              const { data, error } = await supabaseAdmin.storage
+                .from(bucket)
+                .createSignedUrl(fileName, 3600); // 1 hour
+              
+              if (!error && data) {
+                imageUrl = data.signedUrl;
+              }
+            }
+          } catch (error) {
+            console.error(`Error generating signed URL for ${beat.imageFile}:`, error);
+          }
+        }
+        
+        return {
+          id: beat.id,
+          title: beat.title,
+          artist: beat.artist,
+          genre: beat.genre,
+          price: beat.price / 100, // Convert from cents to dollars
+          duration: beat.duration,
+          bpm: beat.bpm,
+          key: beat.key,
+          description: beat.description,
+          category: beat.category,
+          tags: beat.tags || [],
+          imageFile: beat.imageFile,
+          imageUrl, // Include signed URL
+          published: beat.published === 1,
+          audioFiles: {
+            mp3: beat.audioFileMp3,
+            wav: beat.audioFileWav,
+            stems: beat.audioFileStems
+          },
+          createdAt: beat.createdAt,
+          updatedAt: beat.updatedAt
+        };
+      }));
+
+      return NextResponse.json({ beats: formattedBeats });
+    } catch (error) {
+      console.error('Error fetching beats:', error);
+      return NextResponse.json(
+        { error: 'Failed to fetch beats' },
+        { status: 500 }
+      );
+    }
+  }, {
+    userId: user?.id,
+    isAdmin,
+  });
 }
 
 export async function POST(request: Request) {
@@ -231,6 +274,9 @@ export async function POST(request: Request) {
       }
     }
 
+    // Invalidate beats cache after creating new beat
+    invalidateBeatsCache();
+
     return NextResponse.json({ 
       success: true, 
       beat: createdBeat 
@@ -352,6 +398,9 @@ export async function DELETE(request: Request) {
     await db
       .delete(beats)
       .where(eq(beats.id, parseInt(beatId)));
+
+    // Invalidate beats cache after deletion
+    invalidateBeatsCache();
 
     return NextResponse.json({ 
       success: true, 

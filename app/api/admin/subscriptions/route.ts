@@ -6,13 +6,16 @@ import { getUser } from '@/lib/db/queries';
 import { withLogging } from '@/lib/middleware/logging';
 import Stripe from 'stripe';
 import { Logger } from '@/lib/logging';
+import { withCache } from '@/lib/cache/cache-middleware';
+import { cacheInvalidation } from '@/lib/cache/api-cache';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-04-30.basil',
 });
 
 export async function GET(request: NextRequest) {
-  return withLogging(request, async (req) => {
+  return withCache(request, async () => {
+    return withLogging(request, async (req) => {
     try {
       console.log('Admin subscriptions API called');
       
@@ -35,14 +38,15 @@ export async function GET(request: NextRequest) {
       console.log('Found plans:', plans.length);
       console.log('Plans data:', plans);
 
-      return NextResponse.json(plans);
-    } catch (error) {
-      console.error('Error fetching subscription plans:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch subscription plans' },
-        { status: 500 }
-      );
-    }
+        return NextResponse.json(plans);
+      } catch (error) {
+        console.error('Error fetching subscription plans:', error);
+        return NextResponse.json(
+          { error: 'Failed to fetch subscription plans' },
+          { status: 500 }
+        );
+      }
+    });
   });
 }
 
@@ -145,6 +149,10 @@ export async function POST(request: NextRequest) {
         .returning();
 
       console.log('Created subscription plan:', createdPlan);
+
+      // Invalidate cache
+      cacheInvalidation.adminSubscriptions();
+      cacheInvalidation.subscriptions();
 
       return NextResponse.json(createdPlan);
     } catch (error) {

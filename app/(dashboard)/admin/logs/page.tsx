@@ -17,9 +17,7 @@ import {
   XCircle,
   ExternalLink
 } from 'lucide-react';
-import useSWR from 'swr';
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+import { useAdminLogs } from '@/lib/swr/hooks';
 
 interface ApiLog {
   id: number;
@@ -66,21 +64,7 @@ export default function AdminLogsPage() {
   const [page, setPage] = useState(0);
   const limit = 50;
 
-  const { data: logs, error, mutate, isLoading } = useSWR<CombinedLog[]>(
-    `/api/admin/logs?limit=${limit}&offset=${page * limit}`,
-    fetcher,
-    {
-      onSuccess: (data) => {
-        console.log('✅ Logs fetched successfully:', data?.length || 0, 'logs');
-      },
-      onError: (err) => {
-        console.error('❌ Error fetching logs:', err);
-      },
-      onLoadingSlow: () => {
-        console.log('⏳ Logs request is taking a while...');
-      }
-    }
-  );
+  const { logs, isError: error, refresh: mutate, isLoading } = useAdminLogs(limit, page * limit);
 
   // Debug logging
   console.log('🔍 SWR Debug:', {

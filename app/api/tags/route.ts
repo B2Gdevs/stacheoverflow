@@ -1,27 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllTags, searchTags, createTag } from '@/lib/db/tag-queries';
+import { withCache } from '@/lib/cache/cache-middleware';
+import { cacheInvalidation } from '@/lib/cache/api-cache';
 
 export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const query = searchParams.get('q');
-    
-    let tags: string[];
-    
-    if (query) {
-      tags = await searchTags(query);
-    } else {
-      tags = await getAllTags();
+  return withCache(request, async () => {
+    try {
+      const { searchParams } = new URL(request.url);
+      const query = searchParams.get('q');
+      
+      let tags: string[];
+      
+      if (query) {
+        tags = await searchTags(query);
+      } else {
+        tags = await getAllTags();
+      }
+      
+      return NextResponse.json({ tags });
+    } catch (error) {
+      console.error('Error fetching tags:', error);
+      return NextResponse.json(
+        { error: 'Failed to fetch tags' },
+        { status: 500 }
+      );
     }
-    
-    return NextResponse.json({ tags });
-  } catch (error) {
-    console.error('Error fetching tags:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch tags' },
-      { status: 500 }
-    );
-  }
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -54,6 +58,9 @@ export async function POST(request: NextRequest) {
     const newTag = await createTag(tag);
     
     console.log('✅ Tag created successfully:', newTag);
+    
+    // Invalidate tags cache
+    cacheInvalidation.tags();
     
     return NextResponse.json({ 
       success: true, 

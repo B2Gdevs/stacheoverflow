@@ -31,24 +31,12 @@ import {
 import useSWR from "swr"
 import { User as UserType } from "@/lib/db/schema"
 import { supabase } from "@/lib/supabase"
-
-const fetcher = async (url: string) => {
-  // Get the Supabase session token to send to the server
-  const { data: { session } } = await supabase.auth.getSession();
-  const headers: HeadersInit = {};
-  
-  if (session?.access_token) {
-    headers['Authorization'] = `Bearer ${session.access_token}`;
-  }
-  
-  const res = await fetch(url, { headers });
-  return res.json();
-}
+import { fetcher, CACHE_KEYS } from "@/lib/swr/config"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [supabaseUser, setSupabaseUser] = useState<any>(null);
   const [isLoadingSession, setIsLoadingSession] = useState(true);
-  const { data: currentUser, error, mutate } = useSWR<UserType>('/api/user', fetcher);
+  const { data: currentUser, error, mutate } = useSWR<UserType>(CACHE_KEYS.USER, fetcher);
 
   // Check Supabase session on client side
   useEffect(() => {
@@ -58,8 +46,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         
         if (session?.user) {
           setSupabaseUser(session.user);
-          // Trigger a refetch of the user API to link accounts
-          mutate();
+          // Don't mutate - SWR will handle caching and deduplication
         } else {
           setSupabaseUser(null);
         }
@@ -77,7 +64,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setSupabaseUser(session.user);
-        mutate();
+        // Only mutate on sign in/out, not on every auth state change
+        if (_event === 'SIGNED_IN' || _event === 'SIGNED_OUT') {
+          mutate();
+        }
       } else {
         setSupabaseUser(null);
       }

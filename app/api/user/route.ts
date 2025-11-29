@@ -1,32 +1,61 @@
+import { NextRequest, NextResponse } from 'next/server';
 import { getUser } from '@/lib/db/queries';
 import { createClient } from '@/utils/supabase/server';
 import { db } from '@/lib/db/drizzle';
 import { users, socialConnections } from '@/lib/db/schema';
 import { eq, isNull, and, sql } from 'drizzle-orm';
+import { withCache } from '@/lib/cache/cache-middleware';
+import { cacheInvalidation } from '@/lib/cache/api-cache';
 
-export async function GET(request: Request) {
-  // First try to get user from Supabase session
+export async function GET(request: NextRequest) {
+  // Get user ID for cache key (user-specific caching)
+  let userId: number | undefined;
+  
   try {
     const supabase = await createClient();
+    const { data: { user: supabaseUser } } = await supabase.auth.getUser();
     
-    // Try to get session first, then user
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    console.log('🔐 User API: Session check:', {
-      hasSession: !!session,
-      hasUser: !!session?.user,
-      userEmail: session?.user?.email,
-      error: sessionError?.message,
-    });
-    
-    const { data: { user: supabaseUser }, error: supabaseError } = await supabase.auth.getUser();
-    
-    console.log('🔐 User API: Supabase getUser result:', {
-      hasUser: !!supabaseUser,
-      email: supabaseUser?.email,
-      error: supabaseError?.message,
-    });
-    
-    if (!supabaseError && supabaseUser && supabaseUser.email) {
+    if (supabaseUser?.email) {
+      const normalizedEmail = supabaseUser.email.toLowerCase().trim();
+      const [dbUser] = await db
+        .select()
+        .from(users)
+        .where(
+          and(
+            sql`LOWER(${users.email}) = ${normalizedEmail}`,
+            isNull(users.deletedAt)
+          )
+        )
+        .limit(1);
+      if (dbUser) userId = dbUser.id;
+    }
+  } catch (error) {
+    // Fall through to handler
+  }
+  
+  return withCache(request, async () => {
+    // First try to get user from Supabase session
+    try {
+      const supabase = await createClient();
+      
+      // Try to get session first, then user
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      console.log('🔐 User API: Session check:', {
+        hasSession: !!session,
+        hasUser: !!session?.user,
+        userEmail: session?.user?.email,
+        error: sessionError?.message,
+      });
+      
+      const { data: { user: supabaseUser }, error: supabaseError } = await supabase.auth.getUser();
+      
+      console.log('🔐 User API: Supabase getUser result:', {
+        hasUser: !!supabaseUser,
+        email: supabaseUser?.email,
+        error: supabaseError?.message,
+      });
+      
+      if (!supabaseError && supabaseUser && supabaseUser.email) {
       console.log('🔐 User API: Found Supabase user:', supabaseUser.email);
       
       // Normalize email to lowercase for case-insensitive matching
@@ -102,7 +131,7 @@ export async function GET(request: Request) {
           name: dbUser.name,
           supabaseAuthUserId: dbUser.supabaseAuthUserId,
         });
-        return Response.json(dbUser);
+        return NextResponse.json(dbUser);
       }
       
       // User doesn't exist in database, create them
@@ -161,20 +190,23 @@ export async function GET(request: Request) {
         role: newUser.role,
         name: newUser.name,
       });
-      return Response.json(newUser);
+        return NextResponse.json(newUser);
+      }
+    } catch (error) {
+      console.error('🔐 User API: Supabase auth error:', error);
+      // Fall through to legacy session check
     }
-  } catch (error) {
-    console.error('🔐 User API: Supabase auth error:', error);
-    // Fall through to legacy session check
-  }
-  
-  // Fall back to legacy session
-  console.log('🔐 User API: Falling back to legacy session check');
-  const user = await getUser();
-  console.log('🔐 User API: Legacy session user:', user ? {
-    id: user.id,
-    email: user.email,
-    role: user.role,
-  } : 'null');
-  return Response.json(user);
+    
+    // Fall back to legacy session
+    console.log('🔐 User API: Falling back to legacy session check');
+    const user = await getUser();
+    console.log('🔐 User API: Legacy session user:', user ? {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    } : 'null');
+    return NextResponse.json(user);
+  }, {
+    userId,
+  });
 }

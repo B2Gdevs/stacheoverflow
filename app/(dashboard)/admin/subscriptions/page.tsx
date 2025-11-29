@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Edit, Trash2, Save, X } from 'lucide-react';
-import useSWR from 'swr';
+import { useAdminSubscriptions } from '@/lib/swr/hooks';
 
 interface SubscriptionPlan {
   id: number;
@@ -31,16 +31,7 @@ export default function AdminSubscriptionsPage() {
     monthlyDownloads: '',
   });
 
-  const { data: plans, error, mutate } = useSWR<SubscriptionPlan[]>('/api/admin/subscriptions', (url: string) => {
-    console.log('Fetching subscription plans from:', url);
-    return fetch(url).then(res => {
-      console.log('Subscription plans response:', res.status, res.statusText);
-      if (!res.ok) {
-        throw new Error(`Failed to fetch subscription plans: ${res.status} ${res.statusText}`);
-      }
-      return res.json();
-    });
-  });
+  const { subscriptions: plans, isError: error, refresh: mutate } = useAdminSubscriptions();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;

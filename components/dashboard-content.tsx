@@ -8,22 +8,29 @@ import useSWR from 'swr';
 import { useRouter } from 'next/navigation';
 import { useAudio, PlayButton } from '@/lib/audio';
 import { GlobalAudioPlayer } from '@/components/audio';
-import { supabase } from '@/lib/supabase';
+import { fetcher, CACHE_KEYS } from '@/lib/swr/config';
 
 const genres = ["All", "Hip Hop", "Trap", "R&B", "Pop", "Electronic", "Rock"];
 
-const fetcher = async (url: string) => {
-  // Get the Supabase session token to send to the server
-  const { data: { session } } = await supabase.auth.getSession();
-  const headers: HeadersInit = {};
-  
-  if (session?.access_token) {
-    headers['Authorization'] = `Bearer ${session.access_token}`;
+// Helper to get image URL - uses imageUrl from API response (Supabase signed URL)
+function getImageUrl(beat: any): string {
+  // Use imageUrl from API response (Supabase signed URL) - this is the normal way
+  if (beat.imageUrl) {
+    return beat.imageUrl;
   }
   
-  const res = await fetch(url, { headers });
-  return res.json();
-};
+  // Fallback to imageFile if imageUrl not available
+  if (beat.imageFile) {
+    // If it's already a full URL, return it
+    if (beat.imageFile.startsWith('http')) {
+      return beat.imageFile;
+    }
+  }
+  
+  return '';
+}
+
+// Using shared fetcher from SWR config
 
 export function DashboardContent() {
   const router = useRouter();
@@ -35,16 +42,18 @@ export function DashboardContent() {
   const [favorites, setFavorites] = useState<number[]>([]);
   const [selectedPack, setSelectedPack] = useState<any>(null);
 
-  // Fetch beats from the database
-  const { data: beatsData, error, isLoading, mutate } = useSWR('/api/beats', fetcher);
+  // Fetch beats from the database (cached for 4 hours)
+  // Images now include signed URLs directly in the response
+  const { data: beatsData, error, isLoading, mutate } = useSWR(CACHE_KEYS.BEATS, fetcher);
   const beats = beatsData?.beats || [];
   
-  // Fetch beat packs from the database
-  const { data: packsData, error: packsError, isLoading: packsLoading, mutate: mutatePacks } = useSWR('/api/beat-packs', fetcher);
+  // Fetch beat packs from the database (cached for 4 hours)
+  // Images now include signed URLs directly in the response
+  const { data: packsData, error: packsError, isLoading: packsLoading, mutate: mutatePacks } = useSWR(CACHE_KEYS.BEAT_PACKS, fetcher);
   const packs = Array.isArray(packsData) ? packsData : [];
 
-  // Get current user
-  const { data: currentUser } = useSWR('/api/user', fetcher);
+  // Get current user (cached for 15 minutes)
+  const { data: currentUser } = useSWR(CACHE_KEYS.USER, fetcher);
 
   const handlePlayTrack = (beat: any) => {
     playTrack({
@@ -236,9 +245,10 @@ export function DashboardContent() {
                 <div className="relative aspect-square overflow-hidden rounded-t-lg bg-gray-900">
                   {beat.imageFile ? (
                     <img 
-                      src={`/api/files/${beat.imageFile}`} 
+                      src={getImageUrl(beat) || '/placeholder-image.png'} 
                       alt={beat.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
                     />
                   ) : (
                     <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 to-amber-600/20" />
@@ -342,9 +352,10 @@ export function DashboardContent() {
                 <div className="relative aspect-square overflow-hidden rounded-t-lg bg-gray-900">
                   {pack.imageFile ? (
                     <img 
-                      src={`/api/files/${pack.imageFile}`} 
+                      src={getImageUrl(pack) || '/placeholder-image.png'} 
                       alt={pack.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
                     />
                   ) : (
                     <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 to-orange-600/20" />

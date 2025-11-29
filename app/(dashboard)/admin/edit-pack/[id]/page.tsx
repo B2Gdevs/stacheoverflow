@@ -3,19 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { PackEditForm } from '@/components/forms';
-import useSWR from 'swr';
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+import { useBeatPack } from '@/lib/swr/hooks';
 
 export default function EditPackPage() {
   const router = useRouter();
   const params = useParams();
   const packId = params.id as string;
 
-  const { data: pack, error, isLoading } = useSWR(
-    packId ? `/api/beat-packs/${packId}` : null,
-    fetcher
-  );
+  const { pack, isError: error, isLoading } = useBeatPack(packId || null);
 
   const handleComplete = (result: any) => {
     console.log('Pack update completed:', result);

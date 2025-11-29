@@ -6,64 +6,68 @@ import { getUser } from '@/lib/db/queries';
 import { uploadFile } from '@/lib/storage';
 import { APP_CONFIG, FileSizeUtils } from '@/lib/constants';
 import { syncTagsForBeat } from '@/lib/db/tag-queries';
+import { withCache } from '@/lib/cache/cache-middleware';
+import { cacheInvalidation } from '@/lib/cache/api-cache';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const resolvedParams = await params;
-    const beatId = parseInt(resolvedParams.id);
-    
-    if (isNaN(beatId)) {
-      return NextResponse.json({ error: 'Invalid beat ID' }, { status: 400 });
+  return withCache(request, async () => {
+    try {
+      const resolvedParams = await params;
+      const beatId = parseInt(resolvedParams.id);
+      
+      if (isNaN(beatId)) {
+        return NextResponse.json({ error: 'Invalid beat ID' }, { status: 400 });
+      }
+
+      const beat = await db
+        .select()
+        .from(beats)
+        .where(eq(beats.id, beatId))
+        .limit(1);
+
+      if (beat.length === 0) {
+        return NextResponse.json({ error: 'Beat not found' }, { status: 404 });
+      }
+
+      const beatData = beat[0];
+
+      // Transform the data to match the expected format
+      const response = {
+        id: beatData.id,
+        title: beatData.title,
+        artist: beatData.artist,
+        genre: beatData.genre,
+        price: beatData.price,
+        duration: beatData.duration,
+        bpm: beatData.bpm,
+        key: beatData.key,
+        description: beatData.description,
+        category: beatData.category,
+        tags: beatData.tags || [],
+        published: beatData.published === 1,
+        isPack: beatData.isPack === 1,
+        packId: beatData.packId || null,
+        audioFiles: {
+          mp3: beatData.audioFileMp3,
+          wav: beatData.audioFileWav,
+          stems: beatData.audioFileStems,
+        },
+        imageFile: beatData.imageFile,
+        createdAt: beatData.createdAt,
+      };
+
+      return NextResponse.json(response);
+    } catch (error) {
+      console.error('Error fetching beat:', error);
+      return NextResponse.json(
+        { error: 'Failed to fetch beat' },
+        { status: 500 }
+      );
     }
-
-    const beat = await db
-      .select()
-      .from(beats)
-      .where(eq(beats.id, beatId))
-      .limit(1);
-
-    if (beat.length === 0) {
-      return NextResponse.json({ error: 'Beat not found' }, { status: 404 });
-    }
-
-    const beatData = beat[0];
-
-    // Transform the data to match the expected format
-    const response = {
-      id: beatData.id,
-      title: beatData.title,
-      artist: beatData.artist,
-      genre: beatData.genre,
-      price: beatData.price,
-      duration: beatData.duration,
-      bpm: beatData.bpm,
-      key: beatData.key,
-      description: beatData.description,
-      category: beatData.category,
-      tags: beatData.tags || [],
-      published: beatData.published === 1,
-      isPack: beatData.isPack === 1,
-      packId: beatData.packId || null,
-      audioFiles: {
-        mp3: beatData.audioFileMp3,
-        wav: beatData.audioFileWav,
-        stems: beatData.audioFileStems,
-      },
-      imageFile: beatData.imageFile,
-      createdAt: beatData.createdAt,
-    };
-
-    return NextResponse.json(response);
-  } catch (error) {
-    console.error('Error fetching beat:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch beat' },
-      { status: 500 }
-    );
-  }
+  });
 }
 
 export async function PUT(
@@ -256,7 +260,10 @@ export async function PUT(
       }
     }
 
-    return NextResponse.json({ success: true });
+      // Invalidate cache
+      cacheInvalidation.beat(beatId);
+
+      return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error updating beat:', error);
     return NextResponse.json(

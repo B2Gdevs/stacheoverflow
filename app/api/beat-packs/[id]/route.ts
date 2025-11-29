@@ -4,12 +4,15 @@ import { db } from '@/lib/db/drizzle';
 import { beatPacks, beats } from '@/lib/db/schema';
 import { withLogging } from '@/lib/middleware/logging';
 import { eq, inArray } from 'drizzle-orm';
+import { withCache } from '@/lib/cache/cache-middleware';
+import { cacheInvalidation } from '@/lib/cache/api-cache';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  return withLogging(request, async (req) => {
+  return withCache(request, async () => {
+    return withLogging(request, async (req) => {
     try {
       const { id } = await params;
       const packId = parseInt(id);
@@ -64,14 +67,15 @@ export async function GET(
         beats: formattedBeats
       };
 
-      return NextResponse.json(packData);
-    } catch (error) {
-      console.error('Error fetching beat pack:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch beat pack' },
-        { status: 500 }
-      );
-    }
+        return NextResponse.json(packData);
+      } catch (error) {
+        console.error('Error fetching beat pack:', error);
+        return NextResponse.json(
+          { error: 'Failed to fetch beat pack' },
+          { status: 500 }
+        );
+      }
+    });
   });
 }
 
@@ -146,6 +150,9 @@ export async function PUT(
         }
       }
 
+      // Invalidate cache
+      cacheInvalidation.beatPack(packId);
+
       return NextResponse.json(updatedPack[0]);
     } catch (error) {
       console.error('Error updating beat pack:', error);
@@ -189,6 +196,9 @@ export async function DELETE(
       await db
         .delete(beatPacks)
         .where(eq(beatPacks.id, packId));
+
+      // Invalidate cache
+      cacheInvalidation.beatPack(packId);
 
       return NextResponse.json({ success: true });
     } catch (error) {
