@@ -92,11 +92,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       icon: Music,
       isActive: true,
     },
-    {
+    // Only show subscription if feature is enabled
+    ...(isFeatureEnabled('SUBSCRIPTIONS_ENABLED') ? [{
       title: "Subscription",
       url: "/marketplace/subscription",
       icon: Crown,
-    },
+    }] : []),
   ]
 
   // Admin navigation items

@@ -274,39 +274,45 @@ export async function canUserDownload(userId: number, beatId: number): Promise<{
   subscriptionId?: number;
   purchaseId?: number;
 }> {
-  // Check if user has an active subscription
-  const activeSubscription = await db
-    .select()
-    .from(userSubscriptions)
-    .where(
-      and(
-        eq(userSubscriptions.userId, userId),
-        eq(userSubscriptions.status, 'active'),
-        // Check if subscription is still valid
-        // This would need a proper date comparison in a real implementation
+  // Only check subscriptions if feature is enabled
+  // Note: Feature flags are client-side, so we check via environment variable
+  const subscriptionsEnabled = process.env.NEXT_PUBLIC_FEATURE_SUBSCRIPTIONS === 'true';
+  
+  if (subscriptionsEnabled) {
+    // Check if user has an active subscription
+    const activeSubscription = await db
+      .select()
+      .from(userSubscriptions)
+      .where(
+        and(
+          eq(userSubscriptions.userId, userId),
+          eq(userSubscriptions.status, 'active'),
+          // Check if subscription is still valid
+          // This would need a proper date comparison in a real implementation
+        )
       )
-    )
-    .limit(1);
+      .limit(1);
 
-  if (activeSubscription.length > 0) {
-    const subscription = activeSubscription[0];
-    
-    // Check if user has downloads remaining
-    if (subscription.downloadsUsed >= subscription.monthlyDownloads) {
+    if (activeSubscription.length > 0) {
+      const subscription = activeSubscription[0];
+      
+      // Check if user has downloads remaining
+      if (subscription.downloadsUsed >= subscription.monthlyDownloads) {
+        return {
+          canDownload: false,
+          reason: 'Monthly download limit reached',
+        };
+      }
+
       return {
-        canDownload: false,
-        reason: 'Monthly download limit reached',
+        canDownload: true,
+        downloadType: 'subscription',
+        subscriptionId: subscription.id,
       };
     }
-
-    return {
-      canDownload: true,
-      downloadType: 'subscription',
-      subscriptionId: subscription.id,
-    };
   }
 
-  // Check if user has purchased this beat
+  // Check if user has purchased this beat (includes promo code redemptions)
   const purchase = await db
     .select()
     .from(purchases)
