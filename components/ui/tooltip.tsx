@@ -123,7 +123,13 @@ export function InfoIcon({ content, className }: InfoIconProps) {
 }
 
 // Additional exports for compatibility with existing components
-export const TooltipProvider = ({ children }: { children: React.ReactNode }) => {
+export const TooltipProvider = ({ 
+  children, 
+  delayDuration 
+}: { 
+  children: React.ReactNode;
+  delayDuration?: number;
+}) => {
   return <>{children}</>;
 };
 
