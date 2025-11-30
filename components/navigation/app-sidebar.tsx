@@ -124,11 +124,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       icon: Settings,
     },
     {
-      title: "API Logs",
-      url: "/admin/logs",
-      icon: FileText,
-    },
-    {
       title: "Payments",
       url: "/admin/payments",
       icon: CreditCard,
