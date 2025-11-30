@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { getIconSize } from '@/lib/utils/icon-sizes';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/toast';
+import { supabase } from '@/lib/supabase';
 
 interface PromoCode {
   id: number;
@@ -65,9 +66,20 @@ export default function PromoCodesPage() {
   const handleCreate = async () => {
     setIsCreating(true);
     try {
+      // Get Supabase session for auth header
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
       const response = await fetch('/api/admin/promos', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
+        credentials: 'include',
         body: JSON.stringify({
           ...formData,
           assetId: formData.assetId ? parseInt(formData.assetId) : null,

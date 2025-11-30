@@ -22,9 +22,10 @@ interface QuickActionCardProps {
   icon: React.ComponentType<{ className?: string }>;
   href: string;
   color?: string;
+  enabled?: boolean;
 }
 
-function QuickActionCard({ title, description, icon: Icon, href, color = 'green' }: QuickActionCardProps) {
+function QuickActionCard({ title, description, icon: Icon, href, color = 'green', enabled = true }: QuickActionCardProps) {
   const colorClasses = {
     green: 'text-green-400 bg-green-400/10 border-green-400/20 hover:bg-green-400/20',
     blue: 'text-blue-400 bg-blue-400/10 border-blue-400/20 hover:bg-blue-400/20',
@@ -34,27 +35,36 @@ function QuickActionCard({ title, description, icon: Icon, href, color = 'green'
   };
 
   const colorClass = colorClasses[color as keyof typeof colorClasses] || colorClasses.green;
+  const disabledClass = !enabled ? 'opacity-50 cursor-not-allowed grayscale' : '';
 
   return (
-    <Link href={href}>
+    <Link href={enabled ? href : '#'} onClick={(e) => !enabled && e.preventDefault()}>
       <Card className={cn(
-        "bg-gray-900 border-gray-700 transition-all cursor-pointer",
-        "hover:border-gray-600 hover:shadow-lg",
-        colorClass
+        "bg-gray-900 border-gray-700 transition-all",
+        enabled ? "cursor-pointer hover:border-gray-600 hover:shadow-lg" : "cursor-not-allowed",
+        enabled ? colorClass : "",
+        disabledClass
       )}>
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className={cn(
               "p-3 rounded-lg",
-              colorClass
+              enabled ? colorClass : "text-gray-500 bg-gray-800"
             )}>
               <Icon className={cn(getIconSize('lg'), "text-current")} />
             </div>
-            <CardTitle className="text-white text-lg">{title}</CardTitle>
+            <div className="flex-1">
+              <CardTitle className={cn("text-lg", enabled ? "text-white" : "text-gray-500")}>
+                {title}
+              </CardTitle>
+              {!enabled && (
+                <span className="text-xs text-gray-500 mt-1 block">(Disabled)</span>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-gray-400 text-sm">{description}</p>
+          <p className={cn("text-sm", enabled ? "text-gray-400" : "text-gray-600")}>{description}</p>
         </CardContent>
       </Card>
     </Link>
@@ -63,6 +73,9 @@ function QuickActionCard({ title, description, icon: Icon, href, color = 'green'
 
 export default function AdminDashboard() {
   const { enabled: subscriptionsEnabled } = useFeatureFlag('SUBSCRIPTIONS_ENABLED');
+  const { enabled: promoCodesEnabled } = useFeatureFlag('PROMO_CODES_ENABLED');
+  const { enabled: newsEnabled } = useFeatureFlag('NEWS_ENABLED');
+  const { enabled: notificationsEnabled } = useFeatureFlag('NOTIFICATIONS_ENABLED');
 
   const quickActions = [
     {
@@ -71,6 +84,7 @@ export default function AdminDashboard() {
       icon: Users,
       href: '/admin/users',
       color: 'blue' as const,
+      enabled: true, // Always enabled
     },
     {
       title: 'Beats',
@@ -78,6 +92,7 @@ export default function AdminDashboard() {
       icon: Music,
       href: '/admin/upload',
       color: 'green' as const,
+      enabled: true, // Always enabled
     },
     {
       title: 'Beat Packs',
@@ -85,6 +100,7 @@ export default function AdminDashboard() {
       icon: Package,
       href: '/admin/edit-pack',
       color: 'purple' as const,
+      enabled: true, // Always enabled
     },
     {
       title: 'Feature Flags',
@@ -92,6 +108,7 @@ export default function AdminDashboard() {
       icon: Settings,
       href: '/admin/feature-flags',
       color: 'orange' as const,
+      enabled: true, // Always enabled
     },
     {
       title: 'Promo Codes',
@@ -99,14 +116,16 @@ export default function AdminDashboard() {
       icon: Gift,
       href: '/admin/promos',
       color: 'pink' as const,
+      enabled: promoCodesEnabled,
     },
-    ...(subscriptionsEnabled ? [{
+    {
       title: 'Subscriptions',
       description: 'Manage subscription plans and monitor active subscriptions',
       icon: CreditCard,
       href: '/admin/subscriptions',
       color: 'green' as const,
-    }] : []),
+      enabled: subscriptionsEnabled,
+    },
   ];
 
   return (
@@ -135,6 +154,7 @@ export default function AdminDashboard() {
               icon={action.icon}
               href={action.href}
               color={action.color}
+              enabled={action.enabled}
             />
           ))}
         </div>
