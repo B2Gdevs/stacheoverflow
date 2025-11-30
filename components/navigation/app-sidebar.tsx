@@ -17,6 +17,7 @@ import {
   UserPlus,
   Crown,
   FileText,
+  Gift,
 } from "lucide-react"
 
 import { NavMain } from "./nav-main"
@@ -32,7 +33,7 @@ import useSWR from "swr"
 import { User as UserType } from "@/lib/db/schema"
 import { supabase } from "@/lib/supabase"
 import { fetcher, CACHE_KEYS } from "@/lib/swr/config"
-import { isFeatureEnabled } from "@/lib/feature-flags"
+import { isFeatureEnabledSync } from "@/lib/feature-flags"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [supabaseUser, setSupabaseUser] = useState<any>(null);
@@ -94,7 +95,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       isActive: true,
     },
     // Only show subscription if feature is enabled
-    ...(isFeatureEnabled('SUBSCRIPTIONS_ENABLED') ? [{
+    ...(isFeatureEnabledSync('SUBSCRIPTIONS_ENABLED') ? [{
       title: "Subscription",
       url: "/marketplace/subscription",
       icon: Crown,
@@ -117,6 +118,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Users",
       url: "/admin/users",
       icon: Users,
+    },
+    {
+      title: "Feature Flags",
+      url: "/admin/feature-flags",
+      icon: Settings,
+    },
+    {
+      title: "Promo Codes",
+      url: "/admin/promos",
+      icon: Gift,
     },
     {
       title: "Subscriptions",

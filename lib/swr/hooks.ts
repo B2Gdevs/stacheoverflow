@@ -19,6 +19,8 @@ export function useUser() {
 }
 
 // Hook for fetching beats
+export { useFeatureFlags, useFeatureFlag } from './hooks-feature-flags';
+
 export function useBeats() {
   const { data, error, isLoading, mutate } = useSWR(CACHE_KEYS.BEATS, fetcher);
   

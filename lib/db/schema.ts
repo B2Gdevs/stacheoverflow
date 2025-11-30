@@ -445,3 +445,16 @@ export type NewAnnouncement = typeof announcements.$inferInsert;
 export type DismissedAnnouncement = typeof dismissedAnnouncements.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 export type NewNotification = typeof notifications.$inferInsert;
+
+// Feature Flags (stored in database for admin control)
+export const featureFlags = pgTable('feature_flags', {
+  id: serial('id').primaryKey(),
+  flagKey: varchar('flag_key', { length: 100 }).notNull().unique(),
+  flagValue: integer('flag_value').notNull().default(0), // 0 = disabled, 1 = enabled
+  description: text('description'),
+  updatedBy: integer('updated_by').references(() => users.id),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export type FeatureFlag = typeof featureFlags.$inferSelect;
+export type NewFeatureFlag = typeof featureFlags.$inferInsert;
