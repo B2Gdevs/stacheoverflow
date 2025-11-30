@@ -58,17 +58,36 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <AppSidebar />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 bg-black border-b border-gray-800">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="md:hidden" />
+          <div className="flex items-center gap-2 px-4 w-full">
+            <SidebarTrigger className="md:hidden flex-shrink-0" />
             <Separator orientation="vertical" className="mr-2 h-4 bg-gray-700 hidden md:block" />
-            <Breadcrumb>
+            
+            {/* Mobile: Show logo and brand name */}
+            <div className="flex items-center gap-2 md:hidden flex-1 min-w-0">
+              <div className="relative w-8 h-8 flex-shrink-0">
+                <img 
+                  src="/images/stacheoverflow-logo.png" 
+                  alt="StacheOverflow" 
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-bold text-white leading-tight truncate">
+                  stache<span className="text-green-500">overflow</span>
+                </div>
+                <div className="text-xs text-gray-400 truncate">Music Marketplace</div>
+              </div>
+            </div>
+
+            {/* Desktop: Breadcrumb */}
+            <Breadcrumb className="hidden md:flex">
               <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
+                <BreadcrumbItem>
                   <BreadcrumbLink href="/dashboard" className="text-white hover:text-green-500">
                     Stacheoverflow
                   </BreadcrumbLink>
                 </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block text-gray-600" />
+                <BreadcrumbSeparator className="text-gray-600" />
                 <BreadcrumbItem>
                   <BreadcrumbPage className="text-white">Beats</BreadcrumbPage>
                 </BreadcrumbItem>
