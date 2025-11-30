@@ -270,7 +270,7 @@ export default function FeatureFlagsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {flags?.map((flag) => {
+        {Array.isArray(flags) && flags.map((flag) => {
           const enabled = flag.flagValue === 1;
           return (
             <Card key={flag.id} className="bg-gray-900 border-gray-700">
