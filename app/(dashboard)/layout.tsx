@@ -7,12 +7,18 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/s
 import { Separator } from '@/components/ui/separator';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { supabase } from '@/lib/supabase';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Gift } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { getIconSize } from '@/lib/utils/icon-sizes';
+import { PromoCodeModal } from '@/components/dashboard/promo/promo-code-modal';
+import { useSearchParams } from 'next/navigation';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isChecking, setIsChecking] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [promoModalOpen, setPromoModalOpen] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -37,6 +43,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
     checkAuth();
   }, [router]);
+
+  // Check for promo-code URL parameter
+  useEffect(() => {
+    const promoCode = searchParams.get('promo-code');
+    if (promoCode && isAuthenticated) {
+      setPromoModalOpen(true);
+    }
+  }, [searchParams, isAuthenticated]);
 
   if (isChecking) {
     return (
@@ -80,21 +94,39 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
 
             {/* Desktop: Breadcrumb */}
-            <Breadcrumb className="hidden md:flex">
+            <Breadcrumb className="hidden md:flex flex-1">
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink href="/dashboard" className="text-white hover:text-green-500">
+                  <BreadcrumbLink href="/marketplace" className="text-white hover:text-green-500">
                     Stacheoverflow
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="text-gray-600" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage className="text-white">Beats</BreadcrumbPage>
+                  <BreadcrumbPage className="text-white">Marketplace</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
+
+            {/* Promo Code Button - Top Right */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setPromoModalOpen(true)}
+              className="ml-auto text-white hover:text-green-400 hover:bg-gray-800 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
+              title="Redeem Promo Code"
+            >
+              <Gift className={getIconSize('md')} />
+            </Button>
           </div>
         </header>
+
+        {/* Promo Code Modal */}
+        <PromoCodeModal 
+          open={promoModalOpen} 
+          onOpenChange={setPromoModalOpen}
+          initialCode={searchParams.get('promo-code') || undefined}
+        />
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0 bg-black">
           {children}
         </div>

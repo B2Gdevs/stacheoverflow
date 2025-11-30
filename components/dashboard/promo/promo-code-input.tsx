@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Gift, Check, X, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,16 +11,24 @@ import { useToast } from '@/components/ui/toast';
 interface PromoCodeInputProps {
   onRedeemSuccess?: (assetId: number, assetType: string) => void;
   className?: string;
+  initialCode?: string;
 }
 
-export function PromoCodeInput({ onRedeemSuccess, className }: PromoCodeInputProps) {
-  const [code, setCode] = useState('');
+export function PromoCodeInput({ onRedeemSuccess, className, initialCode }: PromoCodeInputProps) {
+  const [code, setCode] = useState(initialCode || '');
   const [isValidating, setIsValidating] = useState(false);
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [validationState, setValidationState] = useState<'idle' | 'valid' | 'invalid' | 'redeemed'>('idle');
   const [validationMessage, setValidationMessage] = useState('');
   const [validatedCode, setValidatedCode] = useState<any>(null);
   const { addToast } = useToast();
+
+  // Auto-validate if initialCode is provided
+  useEffect(() => {
+    if (initialCode && initialCode !== code) {
+      setCode(initialCode);
+    }
+  }, [initialCode]);
 
   const handleValidate = async () => {
     if (!code.trim()) {
@@ -65,6 +73,17 @@ export function PromoCodeInput({ onRedeemSuccess, className }: PromoCodeInputPro
       setIsValidating(false);
     }
   };
+
+  // Auto-validate when initialCode is set
+  useEffect(() => {
+    if (initialCode && code === initialCode && validationState === 'idle' && !isValidating) {
+      const timer = setTimeout(() => {
+        handleValidate();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialCode, code]);
 
   const handleRedeem = async () => {
     if (!code.trim() || validationState !== 'valid') return;

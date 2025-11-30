@@ -4,7 +4,6 @@ import Image from 'next/image';
 import { Gamepad2, Music2, Sparkles } from 'lucide-react';
 import { getIconSize } from '@/lib/utils/icon-sizes';
 import { cn } from '@/lib/utils';
-import { PromoCodeInput } from '../promo/promo-code-input';
 
 interface DashboardHeaderProps {
   title?: string;
@@ -40,10 +39,6 @@ export function DashboardHeader({
         </div>
       </div>
 
-      {/* Promo Code Input */}
-      <div className="mt-6">
-        <PromoCodeInput />
-      </div>
     </div>
   );
 }
