@@ -50,11 +50,25 @@ export default function PromoCodesPage() {
   }, []);
 
   const fetchPromoCodes = async () => {
+    setLoading(true);
     try {
-      const response = await fetch('/api/admin/promos');
+      // Get Supabase session for auth header
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: HeadersInit = {};
+      
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
+      const response = await fetch('/api/admin/promos', {
+        headers,
+        credentials: 'include',
+      });
       if (response.ok) {
         const data = await response.json();
         setPromoCodes(data);
+      } else {
+        console.error('Failed to fetch promo codes');
       }
     } catch (error) {
       console.error('Error fetching promo codes:', error);
