@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Gift, Calendar, Users, X, Check, Loader2 } from 'lucide-react';
+import { Plus, Gift, Calendar, Users, X, Check, Loader2, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +9,7 @@ import { getIconSize } from '@/lib/utils/icon-sizes';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/toast';
 import { supabase } from '@/lib/supabase';
+import { useBeats, useBeatPacks } from '@/lib/swr/hooks';
 
 interface PromoCode {
   id: number;
@@ -234,29 +235,109 @@ export default function PromoCodesPage() {
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-300 mb-2 block">
-                  Asset ID * (for free_asset)
-                </label>
-                <Input
-                  type="number"
-                  value={formData.assetId}
-                  onChange={(e) => setFormData({ ...formData, assetId: e.target.value })}
-                  placeholder="123"
-                  className="bg-black border-gray-600 text-white"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-300 mb-2 block">
                   Asset Type *
                 </label>
                 <select
                   value={formData.assetType}
-                  onChange={(e) => setFormData({ ...formData, assetType: e.target.value })}
+                  onChange={(e) => {
+                      setFormData({ ...formData, assetType: e.target.value, assetId: '' });
+                      setAssetSearch('');
+                    })}
                   className="w-full px-3 py-2 bg-black border border-gray-600 rounded-md text-white"
                 >
                   <option value="beat">Beat</option>
                   <option value="pack">Pack</option>
                 </select>
               </div>
+              {formData.discountType === 'free_asset' && (
+                <div className="md:col-span-2">
+                  <label className="text-sm font-medium text-gray-300 mb-2 block">
+                    Select {formData.assetType === 'beat' ? 'Beat' : 'Pack'} *
+                  </label>
+                  <div className="relative">
+                    <Search className={cn(getIconSize('sm'), "absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400")} />
+                    <Input
+                      value={assetSearch}
+                      onChange={(e) => setAssetSearch(e.target.value)}
+                      placeholder={`Search ${formData.assetType === 'beat' ? 'beats' : 'packs'}...`}
+                      className="bg-black border-gray-600 text-white pl-10"
+                    />
+                  </div>
+                  <div className="mt-2 max-h-48 overflow-y-auto bg-gray-800 rounded-md border border-gray-700">
+                    {formData.assetType === 'beat' ? (
+                      beatsLoading ? (
+                        <div className="p-4 text-center text-gray-400">Loading beats...</div>
+                      ) : (
+                        beats
+                          .filter(beat => 
+                            !assetSearch || 
+                            beat.title.toLowerCase().includes(assetSearch.toLowerCase()) ||
+                            beat.artist?.toLowerCase().includes(assetSearch.toLowerCase())
+                          )
+                          .slice(0, 20)
+                          .map(beat => (
+                            <button
+                              key={beat.id}
+                              type="button"
+                              onClick={() => {
+                                setFormData({ ...formData, assetId: beat.id.toString() });
+                                setAssetSearch(beat.title);
+                              }}
+                              className={cn(
+                                "w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors",
+                                formData.assetId === beat.id.toString() && "bg-green-500/20 border-l-2 border-green-500"
+                              )}
+                            >
+                              <div className="text-white text-sm font-medium">{beat.title}</div>
+                              {beat.artist && (
+                                <div className="text-gray-400 text-xs">by {beat.artist}</div>
+                              )}
+                              <div className="text-gray-500 text-xs">ID: {beat.id} • ${beat.price}</div>
+                            </button>
+                          ))
+                      )
+                    ) : (
+                      packsLoading ? (
+                        <div className="p-4 text-center text-gray-400">Loading packs...</div>
+                      ) : (
+                        packs
+                          .filter(pack => 
+                            !assetSearch || 
+                            pack.name.toLowerCase().includes(assetSearch.toLowerCase())
+                          )
+                          .slice(0, 20)
+                          .map(pack => (
+                            <button
+                              key={pack.id}
+                              type="button"
+                              onClick={() => {
+                                setFormData({ ...formData, assetId: pack.id.toString() });
+                                setAssetSearch(pack.name);
+                              }}
+                              className={cn(
+                                "w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors",
+                                formData.assetId === pack.id.toString() && "bg-green-500/20 border-l-2 border-green-500"
+                              )}
+                            >
+                              <div className="text-white text-sm font-medium">{pack.name}</div>
+                              <div className="text-gray-500 text-xs">ID: {pack.id} • ${pack.price}</div>
+                            </button>
+                          ))
+                      )
+                    )}
+                    {formData.assetId && (
+                      <div className="p-2 border-t border-gray-700 bg-gray-900">
+                        <div className="text-xs text-gray-400">
+                          Selected: {formData.assetType === 'beat' 
+                            ? beats.find(b => b.id.toString() === formData.assetId)?.title || `Beat ID: ${formData.assetId}`
+                            : packs.find(p => p.id.toString() === formData.assetId)?.name || `Pack ID: ${formData.assetId}`
+                          }
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
               <div>
                 <label className="text-sm font-medium text-gray-300 mb-2 block">
                   Description
