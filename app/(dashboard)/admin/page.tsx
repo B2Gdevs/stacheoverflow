@@ -11,10 +11,9 @@ import {
   Gift,
   Upload,
   Package,
-  getIconSize
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getIconSize as getIconSizeUtil } from '@/lib/utils/icon-sizes';
+import { getIconSize } from '@/lib/utils/icon-sizes';
 import { useFeatureFlag } from '@/lib/swr/hooks';
 
 interface QuickActionCardProps {
@@ -49,7 +48,7 @@ function QuickActionCard({ title, description, icon: Icon, href, color = 'green'
               "p-3 rounded-lg",
               colorClass
             )}>
-              <Icon className={cn(getIconSizeUtil('lg'), "text-current")} />
+              <Icon className={cn(getIconSize('lg'), "text-current")} />
             </div>
             <CardTitle className="text-white text-lg">{title}</CardTitle>
           </div>
@@ -145,7 +144,7 @@ export default function AdminDashboard() {
       <Card className="bg-gray-900 border-gray-700">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
-            <Shield className={cn(getIconSizeUtil('md'), "text-green-400")} />
+            <Shield className={cn(getIconSize('md'), "text-green-400")} />
             Admin Tools
           </CardTitle>
         </CardHeader>
