@@ -28,7 +28,7 @@
 ---
 
 ## Task 2: Reorganize Admin Routes
-**Status**: ⬜ Not Started  
+**Status**: ✅ Completed  
 **Priority**: 🔴 Critical  
 **Estimated Time**: 1-2 hours
 
@@ -42,19 +42,19 @@
 - Payments: `/admin/payments` (to be removed - use Stripe dashboard)
 
 **Steps**:
-- [ ] Verify all admin routes are under `/admin`
-- [ ] Remove payments route/page (not needed - use Stripe)
-- [ ] Update navigation to reflect structure
-- [ ] Ensure consistent URL patterns
+- [x] Verify all admin routes are under `/admin`
+- [x] Remove payments route/page (not needed - use Stripe)
+- [x] Update navigation to reflect structure
+- [x] Ensure consistent URL patterns
 
 **Files to Modify**:
 - `components/navigation/app-sidebar.tsx` (remove payments, organize nav)
 - `app/(dashboard)/admin/payments/page.tsx` (remove if exists)
 
 **Acceptance Criteria**:
-- [ ] All admin routes are `/admin/*`
-- [ ] Payments removed from navigation
-- [ ] Navigation is clean and organized
+- [x] All admin routes are `/admin/*`
+- [x] Payments removed from navigation
+- [x] Navigation is clean and organized
 
 ---
 
