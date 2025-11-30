@@ -262,3 +262,109 @@
 
 **Next Task**: Task 2.1 - Expand Search to All Fields
 
+---
+
+## 📦 Phase 2: Enhanced Search & Discovery
+
+### Task 2.1: Expand Search to All Fields
+**Status**: ⬜ Not Started  
+**Priority**: 🟡 High  
+**Estimated Time**: 3-4 hours
+
+**Objective**: Expand search to include tags and description (NOT BPM or key)
+
+**What Needs to Change**:
+- Update search logic to include tags and description
+- Create search utility functions
+- Update filter logic
+
+**Files to Create**:
+- `components/dashboard/utils/search-utils.ts` - Search filtering logic
+- `components/dashboard/utils/filter-utils.ts` - Filter combination logic
+
+**Files to Modify**:
+- `components/dashboard/content.tsx` - Use new search utilities
+- `components/dashboard/filters/search-section.tsx` - Update search handler
+
+**Code Architecture**:
+```typescript
+// search-utils.ts
+export function searchBeats(beats: Beat[], query: string): Beat[] {
+  if (!query.trim()) return beats;
+  
+  const lowerQuery = query.toLowerCase();
+  return beats.filter(beat => 
+    beat.title.toLowerCase().includes(lowerQuery) ||
+    beat.artist.toLowerCase().includes(lowerQuery) ||
+    beat.genre?.toLowerCase().includes(lowerQuery) ||
+    beat.tags?.some(tag => tag.toLowerCase().includes(lowerQuery)) ||
+    beat.description?.toLowerCase().includes(lowerQuery)
+  );
+}
+```
+
+**Dependencies**: Task 1.2
+
+**Acceptance Criteria**:
+- [ ] Search works across title, artist, genre, tags, and description
+- [ ] Tags are searchable
+- [ ] Description is searchable
+- [ ] Performance is acceptable (<100ms for 1000 items)
+- [ ] Existing search functionality preserved
+
+---
+
+### Task 2.2: Implement Advanced Filters Drawer
+**Status**: ⬜ Not Started  
+**Priority**: 🟡 High  
+**Estimated Time**: 4-5 hours
+
+**Objective**: Add price range slider and sort options to filter drawer
+
+**What Needs to Change**:
+- Create advanced filter drawer/sheet component
+- Add price range slider
+- Add sort options
+- Integrate with existing filter drawer
+
+**Files to Create**:
+- `components/dashboard/filters/advanced-filters.tsx` - Advanced filter drawer component
+- `components/dashboard/filters/price-range.tsx` - Price slider component
+- `components/dashboard/filters/sort-options.tsx` - Sort dropdown component
+
+**Files to Modify**:
+- `components/dashboard/filters/filter-drawer.tsx` - Add advanced filters section
+- `components/dashboard/content.tsx` - Integrate advanced filters logic
+
+**Code Architecture**:
+```typescript
+// Price range filter
+interface PriceRange {
+  min: number;
+  max: number;
+}
+
+// Sort options
+type SortOption = 'newest' | 'oldest' | 'price-low' | 'price-high' | 'title-asc' | 'title-desc';
+```
+
+**Dependencies**: Task 1.2, Task 2.1
+
+**Acceptance Criteria**:
+- [ ] Price range slider works smoothly
+- [ ] Sort options apply correctly
+- [ ] Advanced filters integrate with existing category/genre filters
+- [ ] Mobile-friendly drawer (bottom sheet)
+- [ ] Desktop-friendly drawer (side panel)
+- [ ] Filters combine correctly with search
+
+---
+
+## 📊 Phase 2 Progress Summary
+
+### Phase 2: Enhanced Search
+- [ ] Task 2.1: Expand Search Fields (0%)
+- [ ] Task 2.2: Advanced Filters Drawer (0%)
+
+**Phase 2 Progress**: 0/2 tasks (0%)
+
