@@ -18,7 +18,7 @@ export default function HomePage() {
                 From hip hop to trap, find the perfect sound to bring your music to life.
               </p>
               <div className="mt-8 sm:max-w-lg sm:mx-auto sm:text-center lg:text-left lg:mx-0">
-                <Link href="/dashboard">
+                <Link href="/marketplace">
                   <Button
                     size="lg"
                     variant="outline"

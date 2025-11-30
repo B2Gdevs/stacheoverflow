@@ -87,14 +87,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Base navigation items for authenticated users
   const baseNavItems = [
     {
-      title: "Beats",
-      url: "/dashboard",
+      title: "Marketplace",
+      url: "/marketplace",
       icon: Music,
       isActive: true,
     },
     {
       title: "Subscription",
-      url: "/dashboard/subscription",
+      url: "/marketplace/subscription",
       icon: Crown,
     },
   ]
