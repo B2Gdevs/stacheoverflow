@@ -360,3 +360,88 @@ export const socialConnections = pgTable('social_connections', {
 
 export type SocialConnection = typeof socialConnections.$inferSelect;
 export type NewSocialConnection = typeof socialConnections.$inferInsert;
+
+// Promo Codes
+export const promoCodes = pgTable('promo_codes', {
+  id: serial('id').primaryKey(),
+  code: varchar('code', { length: 50 }).notNull().unique(),
+  description: text('description'),
+  discountType: varchar('discount_type', { length: 20 }).notNull(), // 'free_asset', 'percentage', 'fixed'
+  discountValue: integer('discount_value'), // For percentage/fixed, null for free_asset
+  assetId: integer('asset_id').references(() => beats.id), // For free_asset type
+  assetType: varchar('asset_type', { length: 20 }).notNull().default('beat'), // 'beat' or 'pack'
+  maxUses: integer('max_uses'), // null = unlimited
+  usesCount: integer('uses_count').notNull().default(0),
+  validFrom: timestamp('valid_from').notNull().defaultNow(),
+  validUntil: timestamp('valid_until'),
+  isActive: integer('is_active').notNull().default(1),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// Promo Code Redemptions
+export const promoCodeRedemptions = pgTable('promo_code_redemptions', {
+  id: serial('id').primaryKey(),
+  promoCodeId: integer('promo_code_id')
+    .notNull()
+    .references(() => promoCodes.id),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.id),
+  assetId: integer('asset_id')
+    .notNull()
+    .references(() => beats.id),
+  redeemedAt: timestamp('redeemed_at').notNull().defaultNow(),
+});
+
+// Announcements
+export const announcements = pgTable('announcements', {
+  id: serial('id').primaryKey(),
+  title: varchar('title', { length: 255 }).notNull(),
+  message: text('message').notNull(),
+  type: varchar('type', { length: 20 }).notNull().default('info'), // 'info', 'success', 'warning', 'promo'
+  priority: integer('priority').notNull().default(0), // Higher = more important
+  isActive: integer('is_active').notNull().default(1),
+  showUntil: timestamp('show_until'),
+  linkUrl: text('link_url'),
+  linkText: varchar('link_text', { length: 100 }),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// User Dismissed Announcements
+export const dismissedAnnouncements = pgTable('dismissed_announcements', {
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.id),
+  announcementId: integer('announcement_id')
+    .notNull()
+    .references(() => announcements.id),
+  dismissedAt: timestamp('dismissed_at').notNull().defaultNow(),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.userId, table.announcementId] }),
+}));
+
+// Notifications
+export const notifications = pgTable('notifications', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.id),
+  type: varchar('type', { length: 50 }).notNull(), // 'new_release', 'purchase', 'trending', 'promo'
+  title: varchar('title', { length: 255 }).notNull(),
+  message: text('message').notNull(),
+  linkUrl: text('link_url'),
+  isRead: integer('is_read').notNull().default(0),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+export type PromoCode = typeof promoCodes.$inferSelect;
+export type NewPromoCode = typeof promoCodes.$inferInsert;
+export type PromoCodeRedemption = typeof promoCodeRedemptions.$inferSelect;
+export type NewPromoCodeRedemption = typeof promoCodeRedemptions.$inferInsert;
+export type Announcement = typeof announcements.$inferSelect;
+export type NewAnnouncement = typeof announcements.$inferInsert;
+export type DismissedAnnouncement = typeof dismissedAnnouncements.$inferSelect;
+export type Notification = typeof notifications.$inferSelect;
+export type NewNotification = typeof notifications.$inferInsert;
