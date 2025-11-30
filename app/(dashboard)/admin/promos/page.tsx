@@ -32,7 +32,10 @@ export default function PromoCodesPage() {
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [assetSearch, setAssetSearch] = useState('');
   const { addToast } = useToast();
+  const { beats = [], isLoading: beatsLoading } = useBeats();
+  const { packs = [], isLoading: packsLoading } = useBeatPacks();
 
   const [formData, setFormData] = useState({
     code: '',
@@ -240,9 +243,9 @@ export default function PromoCodesPage() {
                 <select
                   value={formData.assetType}
                   onChange={(e) => {
-                      setFormData({ ...formData, assetType: e.target.value, assetId: '' });
-                      setAssetSearch('');
-                    })}
+                    setFormData({ ...formData, assetType: e.target.value, assetId: '' });
+                    setAssetSearch('');
+                  }}
                   className="w-full px-3 py-2 bg-black border border-gray-600 rounded-md text-white"
                 >
                   <option value="beat">Beat</option>
