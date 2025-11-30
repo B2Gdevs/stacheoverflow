@@ -1,62 +1,60 @@
 # Admin Dashboard Improvements - Task Breakdown
 
 ## Current Status
-- ✅ Feature flag system exists
+- ✅ Feature flag system with CRUD
 - ✅ Admin dashboard exists (basic)
 - ✅ Promo code system implemented
-- ⚠️ Need feature flag admin UI
-- ⚠️ Need to remove API logs
+- ⚠️ Need to reorganize admin routes
 - ⚠️ Need to improve admin dashboard
+- ⚠️ Need user purchase history
 
 ---
 
-## Task 1: Create Feature Flag Admin UI
+## Task 1: Feature Flag Admin UI with CRUD ✅
+**Status**: ✅ Completed  
+**Priority**: 🔴 Critical  
+**Estimated Time**: 2-3 hours
+
+**What was done**:
+- ✅ Create `/admin/feature-flags` page
+- ✅ Create API endpoints (GET, POST, PATCH, DELETE)
+- ✅ Store feature flags in database
+- ✅ Toggle UI for each feature flag
+- ✅ Create new feature flags
+- ✅ Delete feature flags
+- ✅ Real-time updates when toggled
+- ✅ Added to admin navigation
+
+---
+
+## Task 2: Reorganize Admin Routes
 **Status**: ⬜ Not Started  
 **Priority**: 🔴 Critical  
 **Estimated Time**: 1-2 hours
 
-**Objective**: Allow admins to toggle feature flags on/off from the admin dashboard
+**Objective**: Consolidate all admin functionality under `/admin` route structure
+
+**Current State**:
+- Feature Flags: `/admin/feature-flags` ✅
+- Promo Codes: `/admin/promos` ✅
+- Users: `/admin/users` ✅
+- Subscriptions: `/admin/subscriptions` ✅
+- Payments: `/admin/payments` (to be removed - use Stripe dashboard)
 
 **Steps**:
-- [ ] Create `/admin/feature-flags` page
-- [ ] Create API endpoint `/api/admin/feature-flags` (GET/PATCH)
-- [ ] Store feature flags in database or environment (decide approach)
-- [ ] Create toggle UI for each feature flag
-- [ ] Add real-time updates when toggled
-- [ ] Add to admin navigation
-
-**Files to Create**:
-- `app/(dashboard)/admin/feature-flags/page.tsx`
-- `app/api/admin/feature-flags/route.ts`
+- [ ] Verify all admin routes are under `/admin`
+- [ ] Remove payments route/page (not needed - use Stripe)
+- [ ] Update navigation to reflect structure
+- [ ] Ensure consistent URL patterns
 
 **Files to Modify**:
-- `components/navigation/app-sidebar.tsx` (add feature flags link)
-- `lib/feature-flags.ts` (maybe add database support)
+- `components/navigation/app-sidebar.tsx` (remove payments, organize nav)
+- `app/(dashboard)/admin/payments/page.tsx` (remove if exists)
 
 **Acceptance Criteria**:
-- [ ] Admins can see all feature flags
-- [ ] Admins can toggle flags on/off
-- [ ] Changes take effect immediately
-- [ ] UI shows current state clearly
-
----
-
-## Task 2: Remove API Logs from Admin Navigation
-**Status**: ✅ Completed  
-**Priority**: 🟡 Medium  
-**Estimated Time**: 5 minutes
-
-**Objective**: Remove API Logs menu item from admin navigation
-
-**Steps**:
-- [x] Remove "API Logs" from adminNavItems array
-
-**Files Modified**:
-- `components/navigation/app-sidebar.tsx`
-
-**Acceptance Criteria**:
-- [x] API Logs no longer appears in admin menu
-- [x] No broken links
+- [ ] All admin routes are `/admin/*`
+- [ ] Payments removed from navigation
+- [ ] Navigation is clean and organized
 
 ---
 
@@ -73,12 +71,16 @@
   - Total users count
   - Total beats/packs count
   - Average price
-  - Total revenue
+  - Total revenue (from purchases)
   - Recent activity
 - [ ] Update admin dashboard to use real data
-- [ ] Add "Create Promo Code" quick action
-- [ ] Add links to upload beat/pack
+- [ ] Add quick action cards:
+  - "Create Promo Code" → `/admin/promos`
+  - "Upload Beat" → `/admin/upload`
+  - "Create Beat Pack" → `/admin/edit-pack`
+  - "Manage Users" → `/admin/users`
 - [ ] Improve layout and styling
+- [ ] Make mobile-responsive
 
 **Files to Create**:
 - `app/api/admin/stats/route.ts`
@@ -89,38 +91,54 @@
 **Acceptance Criteria**:
 - [ ] All stats show real data
 - [ ] Average price calculated correctly
-- [ ] Quick actions work (upload, create promo)
+- [ ] Quick actions work (upload, create promo, etc.)
 - [ ] Layout is clean and organized
 - [ ] Mobile-responsive
 
 ---
 
-## Task 4: Add Promo Code Management to Admin Dashboard
+## Task 4: User Management & Purchase History
 **Status**: ⬜ Not Started  
-**Priority**: 🟡 High  
-**Estimated Time**: 1 hour
+**Priority**: 🔴 Critical  
+**Estimated Time**: 4-5 hours
 
-**Objective**: Add quick access to promo code management from admin dashboard
+**Objective**: Add comprehensive user management with purchase history
 
 **Steps**:
-- [ ] Add "Promo Codes" card to admin dashboard
-- [ ] Link to `/admin/promos` page
-- [ ] Show recent promo codes or stats
-- [ ] Add "Create New" button
+- [ ] Enhance `/admin/users` page:
+  - [ ] List all users with key info (email, role, signup date)
+  - [ ] Search/filter users
+  - [ ] View user details
+  - [ ] Edit user role (admin/user)
+- [ ] Add purchase history view:
+  - [ ] Show all purchases (paid + promo code redemptions)
+  - [ ] Include: date, asset type (beat/pack), price ($0 for promos), promo code if applicable
+  - [ ] Link to asset details
+  - [ ] Show download status
+- [ ] Create API endpoint `/api/admin/users/[id]/purchases`
+- [ ] Add user detail modal/page
+
+**Files to Create**:
+- `app/api/admin/users/[id]/purchases/route.ts`
+- `app/(dashboard)/admin/users/[id]/page.tsx` (optional - could be modal)
 
 **Files to Modify**:
-- `app/(dashboard)/admin/page.tsx`
+- `app/(dashboard)/admin/users/page.tsx`
+- `lib/db/queries.ts` (add purchase history query)
 
 **Acceptance Criteria**:
-- [ ] Promo code card visible on admin dashboard
-- [ ] Links to promo management page
-- [ ] Quick create button works
+- [ ] Can view all users
+- [ ] Can search/filter users
+- [ ] Can view user purchase history
+- [ ] Purchase history includes promo code redemptions
+- [ ] Shows $0 for promo code purchases
+- [ ] Links to assets work
 
 ---
 
 ## Task 5: Test Promo Code System End-to-End
 **Status**: ⬜ Not Started  
-**Priority**: 🔴 Critical  
+**Priority**: 🟡 High  
 **Estimated Time**: 30 minutes
 
 **Objective**: Verify promo code system works completely
@@ -132,6 +150,7 @@
 - [ ] Verify $0 purchase record created
 - [ ] Verify download access granted
 - [ ] Test UI flow (enter code, redeem, download)
+- [ ] Verify purchase history shows promo redemption
 
 **Acceptance Criteria**:
 - [ ] Can create promo code
@@ -140,16 +159,18 @@
 - [ ] Purchase record created
 - [ ] Download access granted
 - [ ] UI flow is smooth
+- [ ] Purchase history shows promo
 
 ---
 
-## Implementation Order
+## Implementation Order (Recommended)
 
-1. **Task 2** (5 min) - Remove API logs (quick win)
-2. **Task 1** (1-2 hours) - Feature flag admin UI
-3. **Task 3** (3-4 hours) - Redesign admin dashboard
-4. **Task 4** (1 hour) - Add promo code management
-5. **Task 5** (30 min) - Test promo codes
+1. **Task 2** (1-2 hours) - Reorganize admin routes (quick cleanup)
+2. **Task 3** (3-4 hours) - Redesign admin dashboard with real stats
+3. **Task 4** (4-5 hours) - User management & purchase history
+4. **Task 5** (30 min) - Test promo codes end-to-end
+
+**Total Estimated Time**: ~9-12 hours
 
 ---
 
@@ -158,4 +179,5 @@
 - Focus on one task at a time
 - Test each task before moving to next
 - Update this document as tasks are completed
-
+- Keep code clean and avoid vestigial code
+- Payments removed - use Stripe dashboard instead
