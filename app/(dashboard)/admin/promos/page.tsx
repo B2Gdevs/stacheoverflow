@@ -143,9 +143,20 @@ export default function PromoCodesPage() {
 
   const handleToggleActive = async (id: number, currentStatus: number) => {
     try {
+      // Get Supabase session for auth header
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
       const response = await fetch(`/api/admin/promos/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
+        credentials: 'include',
         body: JSON.stringify({ isActive: currentStatus === 1 ? 0 : 1 }),
       });
 
