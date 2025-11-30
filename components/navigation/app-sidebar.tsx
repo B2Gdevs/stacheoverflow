@@ -135,11 +135,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       url: "/admin/subscriptions",
       icon: Settings,
     },
-    {
-      title: "Payments",
-      url: "/admin/payments",
-      icon: CreditCard,
-    },
   ]
 
   // Login/signup navigation items for unauthenticated users
