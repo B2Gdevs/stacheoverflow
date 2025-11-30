@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/toast';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/swr/config';
+import { supabase } from '@/lib/supabase';
 
 interface FeatureFlag {
   id: number;
