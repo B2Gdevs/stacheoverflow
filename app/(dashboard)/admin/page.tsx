@@ -118,7 +118,7 @@ export default function AdminDashboard() {
           <p className="text-gray-400">Manage your marketplace and tools</p>
         </div>
         <div className="flex items-center gap-2">
-          <Shield className={cn(getIconSizeUtil('md'), "text-green-400")} />
+          <Shield className={cn(getIconSize('md'), "text-green-400")} />
           <span className="text-green-400 font-medium">Admin Access</span>
         </div>
       </div>
