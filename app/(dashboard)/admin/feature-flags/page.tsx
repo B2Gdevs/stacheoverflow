@@ -31,7 +31,8 @@ const FLAG_DESCRIPTIONS: Record<string, string> = {
 };
 
 export default function FeatureFlagsPage() {
-  const { data: flags, error, isLoading, mutate } = useSWR<FeatureFlag[]>('/api/admin/feature-flags', fetcher);
+  const { data: flagsData, error, isLoading, mutate } = useSWR<FeatureFlag[]>('/api/admin/feature-flags', fetcher);
+  const flags = Array.isArray(flagsData) ? flagsData : [];
   const [updating, setUpdating] = useState<Record<string, boolean>>({});
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState<Record<string, boolean>>({});
