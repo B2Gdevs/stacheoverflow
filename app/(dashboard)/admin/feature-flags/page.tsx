@@ -158,8 +158,18 @@ export default function FeatureFlagsPage() {
     setIsDeleting(prev => ({ ...prev, [flagKey]: true }));
 
     try {
+      // Get Supabase session for auth header
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: HeadersInit = {};
+      
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
       const response = await fetch(`/api/admin/feature-flags/${flagKey}`, {
         method: 'DELETE',
+        headers,
+        credentials: 'include', // Ensure cookies are sent
       });
 
       if (response.ok) {
