@@ -47,9 +47,19 @@ export default function FeatureFlagsPage() {
     setUpdating(prev => ({ ...prev, [flagKey]: true }));
 
     try {
+      // Get Supabase session for auth header
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
       const response = await fetch('/api/admin/feature-flags', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         credentials: 'include', // Ensure cookies are sent
         body: JSON.stringify({
           flagKey,
@@ -89,9 +99,19 @@ export default function FeatureFlagsPage() {
     setUpdating(prev => ({ ...prev, create: true }));
 
     try {
+      // Get Supabase session for auth header
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
       const response = await fetch('/api/admin/feature-flags', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         credentials: 'include', // Ensure cookies are sent
         body: JSON.stringify({
           flagKey: formState.flagKey.toUpperCase(),
