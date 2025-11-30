@@ -33,12 +33,13 @@ import useSWR from "swr"
 import { User as UserType } from "@/lib/db/schema"
 import { supabase } from "@/lib/supabase"
 import { fetcher, CACHE_KEYS } from "@/lib/swr/config"
-import { isFeatureEnabledSync } from "@/lib/feature-flags"
+import { useFeatureFlag } from "@/lib/swr/hooks"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [supabaseUser, setSupabaseUser] = useState<any>(null);
   const [isLoadingSession, setIsLoadingSession] = useState(true);
   const { data: currentUser, error, mutate } = useSWR<UserType>(CACHE_KEYS.USER, fetcher);
+  const { enabled: subscriptionsEnabled } = useFeatureFlag('SUBSCRIPTIONS_ENABLED');
 
   // Check Supabase session on client side
   useEffect(() => {
@@ -95,7 +96,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       isActive: true,
     },
     // Only show subscription if feature is enabled
-    ...(isFeatureEnabledSync('SUBSCRIPTIONS_ENABLED') ? [{
+    ...(subscriptionsEnabled ? [{
       title: "Subscription",
       url: "/marketplace/subscription",
       icon: Crown,

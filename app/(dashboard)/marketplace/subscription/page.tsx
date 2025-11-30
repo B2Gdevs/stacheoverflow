@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Crown, Download, Calendar, CreditCard, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { useSubscriptions, useUserSubscription } from '@/lib/swr/hooks';
-import { isFeatureEnabled } from '@/lib/feature-flags';
+import { isFeatureEnabledSync } from '@/lib/feature-flags';
 import { useRouter } from 'next/navigation';
 
 interface SubscriptionPlan {
@@ -37,19 +37,24 @@ interface UserSubscription {
 export default function SubscriptionPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const { enabled: subscriptionsEnabled, isLoading: flagsLoading } = useFeatureFlag('SUBSCRIPTIONS_ENABLED');
 
   // Check if subscriptions are enabled
   useEffect(() => {
-    if (!isFeatureEnabled('SUBSCRIPTIONS_ENABLED')) {
+    if (!flagsLoading && !subscriptionsEnabled) {
       router.replace('/marketplace');
     }
-  }, [router]);
+  }, [router, subscriptionsEnabled, flagsLoading]);
 
   const { subscriptions: plans, isError: plansError } = useSubscriptions();
   const { subscription: userSubscription, isError: subscriptionError } = useUserSubscription();
 
   // If feature is disabled, don't render
-  if (!isFeatureEnabled('SUBSCRIPTIONS_ENABLED')) {
+  if (flagsLoading) {
+    return null; // Or show loading state
+  }
+
+  if (!subscriptionsEnabled) {
     return null;
   }
 
