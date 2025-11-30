@@ -527,13 +527,15 @@ function SidebarMenuButton({
     return button
   }
 
-  const tooltipContent = typeof tooltip === "string" ? tooltip : tooltip.children || '';
-  const tooltipSide = typeof tooltip === "string" ? "right" : (tooltip.side || "right");
-
   // Only show tooltip when sidebar is collapsed and not on mobile
   if (state !== "collapsed" || isMobile) {
     return button;
   }
+
+  const tooltipContent = typeof tooltip === "string" 
+    ? tooltip 
+    : (typeof tooltip.children === 'string' ? tooltip.children : String(tooltip.children || ''));
+  const tooltipSide = typeof tooltip === "string" ? "right" : (tooltip.side || "right");
 
   return (
     <Tooltip content={tooltipContent} side={tooltipSide as 'top' | 'bottom' | 'left' | 'right'}>
