@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Plus, Search, Music, Zap, Star, Heart, Tag as TagIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { validateTagName } from '@/lib/utils/tag-validation';
+import { getIconSize } from '@/lib/utils/icon-sizes';
 
 interface TagInputProps {
   title: string;
@@ -190,16 +191,16 @@ export function TagInput({
 
   const getTagIcon = (tag: string) => {
     const iconMap: { [key: string]: React.ReactNode } = {
-      'Chorus': <Music className="h-3 w-3" />,
-      'Verse': <Zap className="h-3 w-3" />,
-      'Hook': <Star className="h-3 w-3" />,
-      'Bridge': <Heart className="h-3 w-3" />,
-      'Intro': <Music className="h-3 w-3" />,
-      'Outro': <Music className="h-3 w-3" />,
-      'Instrumental': <Music className="h-3 w-3" />,
-      'Acapella': <Music className="h-3 w-3" />
+      'Chorus': <Music className={getIconSize('sm')} />,
+      'Verse': <Zap className={getIconSize('sm')} />,
+      'Hook': <Star className={getIconSize('sm')} />,
+      'Bridge': <Heart className={getIconSize('sm')} />,
+      'Intro': <Music className={getIconSize('sm')} />,
+      'Outro': <Music className={getIconSize('sm')} />,
+      'Instrumental': <Music className={getIconSize('sm')} />,
+      'Acapella': <Music className={getIconSize('sm')} />
     };
-    return iconMap[tag] || <TagIcon className="h-3 w-3" />;
+    return iconMap[tag] || <TagIcon className={getIconSize('sm')} />;
   };
 
   const filteredTags = availableTags.filter(tag => 
@@ -225,7 +226,7 @@ export function TagInput({
       {/* Search Input */}
       <div className="relative">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${getIconSize('md')} text-gray-400`} />
           <input
             ref={inputRef}
             type="text"
@@ -255,7 +256,7 @@ export function TagInput({
                 onClick={() => handleTagSelect(tag)}
                 className="w-full px-4 py-2 text-left text-white hover:bg-gray-700 flex items-center gap-2"
               >
-                <Search className="h-3 w-3 text-gray-400" />
+                <Search className={`${getIconSize('sm')} text-gray-400`} />
                 {tag}
               </button>
             ))}
@@ -265,7 +266,7 @@ export function TagInput({
                 onClick={handleCreateTag}
                 className="w-full px-4 py-2 text-left text-green-400 hover:bg-gray-700 flex items-center gap-2 border-t border-gray-600"
               >
-                <Plus className="h-3 w-3" />
+                <Plus className={getIconSize('sm')} />
                 Create "{searchQuery.trim()}"
               </button>
             )}
@@ -296,7 +297,7 @@ export function TagInput({
                   onClick={() => onTagRemove(tag)}
                   className="ml-1 hover:bg-white/20 rounded-full p-0.5 transition-colors"
                 >
-                  <X className="h-3 w-3" />
+                  <X className={getIconSize('sm')} />
                 </button>
               </span>
             ))}

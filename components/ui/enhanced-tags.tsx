@@ -3,6 +3,7 @@
 import React from 'react';
 import { X, Plus, Music, Zap, Star, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getIconSize } from '@/lib/utils/icon-sizes';
 
 interface TagProps {
   children: React.ReactNode;
@@ -49,7 +50,7 @@ export function Tag({
           }}
           className="ml-1 hover:bg-white/20 rounded-full p-0.5 transition-colors"
         >
-          <X className="h-3 w-3" />
+          <X className={getIconSize('sm')} />
         </button>
       )}
     </span>
@@ -79,16 +80,16 @@ export function TagSection({
 }: TagSectionProps) {
   const getTagIcon = (tag: string) => {
     const iconMap: { [key: string]: React.ReactNode } = {
-      'Chorus': <Music className="h-3 w-3" />,
-      'Verse': <Zap className="h-3 w-3" />,
-      'Hook': <Star className="h-3 w-3" />,
-      'Bridge': <Heart className="h-3 w-3" />,
-      'Intro': <Music className="h-3 w-3" />,
-      'Outro': <Music className="h-3 w-3" />,
-      'Instrumental': <Music className="h-3 w-3" />,
-      'Acapella': <Music className="h-3 w-3" />
+      'Chorus': <Music className={getIconSize('sm')} />,
+      'Verse': <Zap className={getIconSize('sm')} />,
+      'Hook': <Star className={getIconSize('sm')} />,
+      'Bridge': <Heart className={getIconSize('sm')} />,
+      'Intro': <Music className={getIconSize('sm')} />,
+      'Outro': <Music className={getIconSize('sm')} />,
+      'Instrumental': <Music className={getIconSize('sm')} />,
+      'Acapella': <Music className={getIconSize('sm')} />
     };
-    return iconMap[tag] || <Music className="h-3 w-3" />;
+    return iconMap[tag] || <Music className={getIconSize('sm')} />;
   };
 
   return (
@@ -108,7 +109,7 @@ export function TagSection({
               key={tag}
               variant={selectedTags.includes(tag) ? 'selected' : 'add'}
               onClick={() => onTagClick(tag)}
-              icon={selectedTags.includes(tag) ? null : <Plus className="h-3 w-3" />}
+              icon={selectedTags.includes(tag) ? null : <Plus className={getIconSize('sm')} />}
             >
               {tag}
             </Tag>
@@ -153,7 +154,7 @@ export function CategorySelector({
   return (
     <div className={cn("space-y-4", className)}>
       <h3 className="text-white font-bold text-lg flex items-center gap-2">
-        <Star className="h-5 w-5 text-green-400" />
+        <Star className={`${getIconSize('md')} text-green-400`} />
         Category
       </h3>
       <p className="text-gray-400 text-sm">Choose the primary category for your beat</p>

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Search, Music, Check } from 'lucide-react';
+import { getIconSize } from '@/lib/utils/icon-sizes';
 
 interface Beat {
   id: number;
@@ -78,7 +79,7 @@ export default function BeatSearch({
     <div className={`space-y-4 ${className}`}>
       {/* Search Input */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 ${getIconSize('md')}`} />
         <Input
           placeholder="Search beats by title, artist, genre, or tags..."
           value={searchTerm}
@@ -151,7 +152,7 @@ export default function BeatSearch({
                       </div>
                       {isSelected && (
                         <div className="text-green-500">
-                          <Check className="h-4 w-4" />
+                          <Check className={getIconSize('md')} />
                         </div>
                       )}
                     </div>

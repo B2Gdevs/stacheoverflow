@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { useAudio, PlayButton } from '@/lib/audio';
 import { GlobalAudioPlayer } from '@/components/audio';
 import { fetcher, CACHE_KEYS } from '@/lib/swr/config';
+import { getIconSize, getIconButtonSize } from '@/lib/utils/icon-sizes';
 
 const genres = ["All", "Hip Hop", "Trap", "R&B", "Pop", "Electronic", "Rock"];
 
@@ -115,7 +116,7 @@ export function DashboardContent() {
         <div className="animate-pulse">
           <div className="h-8 bg-gray-700 rounded w-1/4 mb-4"></div>
           <div className="h-4 bg-gray-700 rounded w-1/2 mb-8"></div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-3">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="bg-gray-800 rounded-lg h-64"></div>
             ))}
@@ -137,76 +138,83 @@ export function DashboardContent() {
         {/* Search and Filters */}
         <div className="mb-8 space-y-4">
           {/* Search Bar */}
-          <div className="flex gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <div className="flex gap-2 sm:gap-4">
+            <div className="relative flex-1 min-w-0">
+              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 ${getIconSize('md')}`} />
               <Input
                 type="text"
                 placeholder="Search music..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-black border-2 border-gray-600 text-white placeholder-gray-400 focus:border-green-500"
+                className="pl-12 sm:pl-10 bg-black border-2 border-gray-600 text-white placeholder-gray-400 focus:border-green-500"
               />
             </div>
-            <Button variant="outline" className="bg-black border-2 border-gray-600 text-white hover:bg-gray-800">
-              <Filter className="h-4 w-4 mr-2" />
-              Filter
+            <Button 
+              variant="outline" 
+              className="bg-black border-2 border-gray-600 text-white hover:bg-gray-800 min-h-[44px] sm:min-h-0 flex-shrink-0"
+            >
+              <Filter className={`${getIconSize('md')} mr-2`} />
+              <span className="hidden sm:inline">Filter</span>
             </Button>
           </div>
 
-          {/* Category Filters */}
-          <div className="flex gap-2">
-            <Button
-              variant={selectedCategory === 'all' ? 'default' : 'outline'}
-              onClick={() => setSelectedCategory('all')}
-              className={`font-bold border-2 ${
-                selectedCategory === 'all' 
-                  ? 'bg-green-500 border-green-500 text-white' 
-                  : 'bg-black border-gray-600 text-white hover:bg-gray-800'
-              }`}
-            >
-              All Music
-            </Button>
-            <Button
-              variant={selectedCategory === 'artist' ? 'default' : 'outline'}
-              onClick={() => setSelectedCategory('artist')}
-              className={`font-bold border-2 ${
-                selectedCategory === 'artist' 
-                  ? 'bg-green-500 border-green-500 text-white' 
-                  : 'bg-black border-gray-600 text-white hover:bg-gray-800'
-              }`}
-            >
-              Beats for Artists
-            </Button>
-            <Button
-              variant={selectedCategory === 'game' ? 'default' : 'outline'}
-              onClick={() => setSelectedCategory('game')}
-              className={`font-bold border-2 ${
-                selectedCategory === 'game' 
-                  ? 'bg-green-500 border-green-500 text-white' 
-                  : 'bg-black border-gray-600 text-white hover:bg-gray-800'
-              }`}
-            >
-              Music for Games
-            </Button>
-          </div>
-
-          {/* Genre Filters */}
-          <div className="flex gap-2 flex-wrap">
-            {genres.map((genre) => (
+          {/* Category Filters - Horizontal Scroll on Mobile */}
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1">
+            <div className="flex gap-2 min-w-max">
               <Button
-                key={genre}
-                variant={selectedGenre === genre ? 'default' : 'outline'}
-                onClick={() => setSelectedGenre(genre)}
-                className={`font-bold border-2 ${
-                  selectedGenre === genre 
+                variant={selectedCategory === 'all' ? 'default' : 'outline'}
+                onClick={() => setSelectedCategory('all')}
+                className={`font-bold border-2 whitespace-nowrap flex-shrink-0 min-h-[44px] sm:min-h-0 ${
+                  selectedCategory === 'all' 
                     ? 'bg-green-500 border-green-500 text-white' 
                     : 'bg-black border-gray-600 text-white hover:bg-gray-800'
                 }`}
               >
-                {genre}
+                All Music
               </Button>
-            ))}
+              <Button
+                variant={selectedCategory === 'artist' ? 'default' : 'outline'}
+                onClick={() => setSelectedCategory('artist')}
+                className={`font-bold border-2 whitespace-nowrap flex-shrink-0 min-h-[44px] sm:min-h-0 ${
+                  selectedCategory === 'artist' 
+                    ? 'bg-green-500 border-green-500 text-white' 
+                    : 'bg-black border-gray-600 text-white hover:bg-gray-800'
+                }`}
+              >
+                Beats for Artists
+              </Button>
+              <Button
+                variant={selectedCategory === 'game' ? 'default' : 'outline'}
+                onClick={() => setSelectedCategory('game')}
+                className={`font-bold border-2 whitespace-nowrap flex-shrink-0 min-h-[44px] sm:min-h-0 ${
+                  selectedCategory === 'game' 
+                    ? 'bg-green-500 border-green-500 text-white' 
+                    : 'bg-black border-gray-600 text-white hover:bg-gray-800'
+                }`}
+              >
+                Music for Games
+              </Button>
+            </div>
+          </div>
+
+          {/* Genre Filters - Horizontal Scroll on Mobile */}
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1">
+            <div className="flex gap-2 min-w-max">
+              {genres.map((genre) => (
+                <Button
+                  key={genre}
+                  variant={selectedGenre === genre ? 'default' : 'outline'}
+                  onClick={() => setSelectedGenre(genre)}
+                  className={`font-bold border-2 whitespace-nowrap flex-shrink-0 min-h-[44px] sm:min-h-0 ${
+                    selectedGenre === genre 
+                      ? 'bg-green-500 border-green-500 text-white' 
+                      : 'bg-black border-gray-600 text-white hover:bg-gray-800'
+                  }`}
+                >
+                  {genre}
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -224,7 +232,7 @@ export function DashboardContent() {
               onClick={() => router.push('/admin/upload')}
               className="bg-green-500 hover:bg-green-600"
             >
-              <Upload className="h-4 w-4 mr-2" />
+              <Upload className={`${getIconSize('md')} mr-2`} />
               Upload Your First Track
             </Button>
           </div>
@@ -237,7 +245,7 @@ export function DashboardContent() {
             <p className="text-gray-300">Try adjusting your search or filter criteria</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-3">
             {/* Individual Beats */}
             {filteredBeats.map((beat: any) => (
               <div key={beat.id} className="group bg-black rounded-lg border-2 border-gray-700 hover:border-green-500 transition-all duration-200 hover:shadow-lg">
@@ -271,9 +279,9 @@ export function DashboardContent() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="h-8 w-8 p-0 bg-black/50 hover:bg-black/70 text-white"
+                      className={`${getIconButtonSize('sm')} bg-black/50 hover:bg-black/70 text-white`}
                     >
-                      <Heart className="h-4 w-4" />
+                      <Heart className={getIconSize('sm')} />
                     </Button>
                   </div>
                   <div className="absolute top-3 left-3">
@@ -311,9 +319,9 @@ export function DashboardContent() {
                     {currentUser?.role !== 'admin' && (
                       <Button 
                         size="sm" 
-                        className="w-full bg-green-500 hover:bg-green-600 text-white font-bold text-xs cursor-pointer"
+                        className="w-full bg-green-500 hover:bg-green-600 text-white font-bold text-xs cursor-pointer min-h-[44px] sm:min-h-0"
                       >
-                        <ShoppingCart className="h-3 w-3 mr-1" />
+                        <ShoppingCart className={`${getIconSize('sm')} mr-1`} />
                         Buy Now
                       </Button>
                     )}
@@ -324,18 +332,18 @@ export function DashboardContent() {
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          className="bg-gray-800 border-2 border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-gray-500 text-xs flex-1 cursor-pointer"
+                          className="bg-gray-800 border-2 border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-gray-500 text-xs flex-1 cursor-pointer min-h-[44px] sm:min-h-0"
                           onClick={() => router.push(`/admin/edit/${beat.id}`)}
                         >
-                          <Edit className="h-3 w-3 mr-1" />
+                          <Edit className={`${getIconSize('sm')} mr-1`} />
                           Edit
                         </Button>
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          className="bg-gray-800 border-2 border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-gray-500 text-xs flex-1 cursor-pointer"
+                          className="bg-gray-800 border-2 border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-gray-500 text-xs flex-1 cursor-pointer min-h-[44px] sm:min-h-0"
                         >
-                          <Trash2 className="h-3 w-3 mr-1" />
+                          <Trash2 className={`${getIconSize('sm')} mr-1`} />
                           Delete
                         </Button>
                       </div>
@@ -436,10 +444,10 @@ export function DashboardContent() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="w-full bg-gray-800 border-2 border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-gray-500 text-xs"
+                      className="w-full bg-gray-800 border-2 border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-gray-500 text-xs min-h-[44px] sm:min-h-0"
                       onClick={() => setSelectedPack(pack)}
                     >
-                      <Package className="h-3 w-3 mr-1" />
+                      <Package className={`${getIconSize('sm')} mr-1`} />
                       View Details
                     </Button>
 
@@ -447,9 +455,9 @@ export function DashboardContent() {
                     {currentUser?.role !== 'admin' && (
                       <Button 
                         size="sm" 
-                        className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs cursor-pointer"
+                        className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs cursor-pointer min-h-[44px] sm:min-h-0"
                       >
-                        <ShoppingCart className="h-3 w-3 mr-1" />
+                        <ShoppingCart className={`${getIconSize('sm')} mr-1`} />
                         Buy Pack
                       </Button>
                     )}
@@ -460,18 +468,18 @@ export function DashboardContent() {
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          className="bg-gray-800 border-2 border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-gray-500 text-xs flex-1 cursor-pointer"
+                          className="bg-gray-800 border-2 border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-gray-500 text-xs flex-1 cursor-pointer min-h-[44px] sm:min-h-0"
                           onClick={() => router.push(`/admin/edit-pack/${pack.id}`)}
                         >
-                          <Edit className="h-3 w-3 mr-1" />
+                          <Edit className={`${getIconSize('sm')} mr-1`} />
                           Edit
                         </Button>
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          className="bg-gray-800 border-2 border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-gray-500 text-xs flex-1 cursor-pointer"
+                          className="bg-gray-800 border-2 border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-gray-500 text-xs flex-1 cursor-pointer min-h-[44px] sm:min-h-0"
                         >
-                          <Trash2 className="h-3 w-3 mr-1" />
+                          <Trash2 className={`${getIconSize('sm')} mr-1`} />
                           Delete
                         </Button>
                       </div>

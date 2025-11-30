@@ -4,6 +4,7 @@ import React from 'react';
 import { Play, Pause, Volume2, VolumeX, Download, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAudio } from './context';
+import { getIconSize } from '@/lib/utils/icon-sizes';
 
 interface AudioPlayerProps {
   onPurchase?: (trackId: string) => void;
@@ -90,9 +91,9 @@ export function AudioPlayer({ onPurchase, onDownload }: AudioPlayerProps) {
           <Button
             size="sm"
             onClick={toggleTrack}
-            className="bg-green-500 hover:bg-green-600 text-white w-8 h-8 rounded-full cursor-pointer"
+            className="bg-green-500 hover:bg-green-600 text-white w-11 h-11 sm:w-8 sm:h-8 rounded-full cursor-pointer"
           >
-            {playerState.isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3 ml-0.5" />}
+            {playerState.isPlaying ? <Pause className={getIconSize('sm')} /> : <Play className={`${getIconSize('sm')} ml-0.5`} />}
           </Button>
           
           <div className="flex items-center gap-2">
@@ -122,18 +123,18 @@ export function AudioPlayer({ onPurchase, onDownload }: AudioPlayerProps) {
             <Button
               size="sm"
               onClick={() => onDownload?.(currentTrack.id)}
-              className="bg-green-500 hover:bg-green-600 text-white text-xs px-3 py-1 cursor-pointer"
+              className="bg-green-500 hover:bg-green-600 text-white text-xs px-3 py-1 cursor-pointer min-h-[44px] sm:min-h-0"
             >
-              <Download className="h-3 w-3 mr-1" />
+              <Download className={`${getIconSize('sm')} mr-1`} />
               Download
             </Button>
           ) : (
             <Button
               size="sm"
               onClick={() => onPurchase?.(currentTrack.id)}
-              className="bg-green-500 hover:bg-green-600 text-white text-xs px-3 py-1 cursor-pointer"
+              className="bg-green-500 hover:bg-green-600 text-white text-xs px-3 py-1 cursor-pointer min-h-[44px] sm:min-h-0"
             >
-              <ShoppingCart className="h-3 w-3 mr-1" />
+              <ShoppingCart className={`${getIconSize('sm')} mr-1`} />
               Buy Now
             </Button>
           )}
@@ -146,9 +147,9 @@ export function AudioPlayer({ onPurchase, onDownload }: AudioPlayerProps) {
               size="sm"
               variant="ghost"
               onClick={() => playerControls.mute()}
-              className="text-gray-400 hover:text-white w-6 h-6 p-0 cursor-pointer"
+              className="text-gray-400 hover:text-white w-11 h-11 sm:w-6 sm:h-6 p-0 cursor-pointer"
             >
-              {playerState.isMuted ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
+              {playerState.isMuted ? <VolumeX className={getIconSize('sm')} /> : <Volume2 className={getIconSize('sm')} />}
             </Button>
             <input
               type="range"
@@ -165,7 +166,7 @@ export function AudioPlayer({ onPurchase, onDownload }: AudioPlayerProps) {
             size="sm"
             variant="ghost"
             onClick={closePlayer}
-            className="text-gray-400 hover:text-white w-6 h-6 p-0 cursor-pointer"
+            className="text-gray-400 hover:text-white w-11 h-11 sm:w-6 sm:h-6 p-0 cursor-pointer text-lg sm:text-base"
           >
             ✕
           </Button>

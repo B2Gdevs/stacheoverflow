@@ -13,6 +13,7 @@ import {
   LogIn,
   UserPlus,
 } from "lucide-react"
+import { getIconSize } from "@/lib/utils/icon-sizes"
 
 import {
   Avatar,
@@ -136,7 +137,7 @@ export function NavUser({
                 <div className="flex items-center gap-2">
                   <span className="truncate font-medium">{displayUser.name || displayUser.email}</span>
                   {isAuthenticated && 'role' in displayUser && displayUser.role === 'admin' && (
-                    <Shield className="h-3 w-3 text-green-500" />
+                    <Shield className={`${getIconSize('sm')} text-green-500`} />
                   )}
                 </div>
                 <span className="truncate text-xs">{displayUser.email}</span>
@@ -165,7 +166,7 @@ export function NavUser({
                   <div className="flex items-center gap-2">
                     <span className="truncate font-medium">{displayUser.name || displayUser.email}</span>
                     {isAuthenticated && 'role' in displayUser && displayUser.role === 'admin' && (
-                      <Shield className="h-3 w-3 text-green-500" />
+                      <Shield className={`${getIconSize('sm')} text-green-500`} />
                     )}
                   </div>
                   <span className="truncate text-xs">{displayUser.email}</span>

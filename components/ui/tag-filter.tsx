@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, X, Tag as TagIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getIconSize } from '@/lib/utils/icon-sizes';
 
 interface TagFilterProps {
   title?: string;
@@ -71,7 +72,7 @@ export function TagFilter({
       {title && (
         <div className="flex items-center justify-between">
           <h3 className="text-white font-bold text-lg flex items-center gap-2">
-            <TagIcon className="h-5 w-5 text-green-400" />
+            <TagIcon className={`${getIconSize('md')} text-green-400`} />
             {title}
           </h3>
           {onClearAll && selectedTags.length > 0 && (
@@ -91,7 +92,7 @@ export function TagFilter({
       
       {/* Search Input */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${getIconSize('md')} text-gray-400`} />
         <input
           type="text"
           value={searchQuery}
@@ -126,9 +127,9 @@ export function TagFilter({
                     : "bg-gray-700/50 text-gray-300 border border-gray-600 hover:bg-gray-600/50 hover:border-gray-500"
                 )}
               >
-                <TagIcon className="h-3 w-3" />
+                <TagIcon className={getIconSize('sm')} />
                 {tag}
-                {isSelected && <X className="h-3 w-3" />}
+                {isSelected && <X className={getIconSize('sm')} />}
               </button>
             );
           })}
@@ -153,13 +154,13 @@ export function TagFilter({
                 key={tag}
                 className="inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium bg-gradient-to-r from-green-500 to-emerald-500 text-white border border-green-400 shadow-lg shadow-green-500/25"
               >
-                <TagIcon className="h-3 w-3" />
+                <TagIcon className={getIconSize('sm')} />
                 {tag}
                 <button
                   onClick={() => onTagToggle(tag)}
-                  className="ml-1 hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                  className="ml-1 hover:bg-white/20 rounded-full p-0.5 transition-colors min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
                 >
-                  <X className="h-3 w-3" />
+                  <X className={getIconSize('sm')} />
                 </button>
               </span>
             ))}
