@@ -53,13 +53,32 @@ export async function prefetchCache(key: string) {
 export function clearAllCache() {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('swr-cache');
-    // Clear SWR's internal cache
-    cache.clear();
+    // Invalidate all known cache keys
+    Object.values(CACHE_KEYS).forEach(key => {
+      if (typeof key === 'string') {
+        mutate(key, undefined, { revalidate: false });
+      }
+    });
   }
 }
 
-// Get cached data synchronously
+// Get cached data synchronously (from localStorage)
 export function getCachedData<T>(key: string): T | undefined {
-  return cache.get(key)?.data as T | undefined;
+  if (typeof window === 'undefined') return undefined;
+  
+  try {
+    const cached = localStorage.getItem('swr-cache');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      const cachedItem = parsed[key];
+      if (cachedItem && cachedItem.data) {
+        return cachedItem.data as T;
+      }
+    }
+  } catch (error) {
+    console.error('Error reading from cache:', error);
+  }
+  
+  return undefined;
 }
 
