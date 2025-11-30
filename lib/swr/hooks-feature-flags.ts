@@ -47,7 +47,7 @@ export function useFeatureFlag(flagKey: string) {
   
   // Convert array to object for lookup
   const flagsObj: Record<string, boolean> = {};
-  if (data) {
+  if (data && Array.isArray(data)) {
     data.forEach(flag => {
       flagsObj[flag.flagKey] = flag.flagValue === 1;
     });
