@@ -80,9 +80,17 @@ export async function POST(request: NextRequest) {
         validUntil,
       } = body;
 
-      if (!code || !discountType || !assetId) {
+      if (!code || !discountType) {
         return NextResponse.json(
-          { error: 'Code, discountType, and assetId are required' },
+          { error: 'Code and discountType are required' },
+          { status: 400 }
+        );
+      }
+
+      // For free_asset type, assetId is required
+      if (discountType === 'free_asset' && !assetId) {
+        return NextResponse.json(
+          { error: 'Asset ID is required for free_asset promo codes' },
           { status: 400 }
         );
       }
