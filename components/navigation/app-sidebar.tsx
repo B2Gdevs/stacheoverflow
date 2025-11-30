@@ -32,6 +32,7 @@ import useSWR from "swr"
 import { User as UserType } from "@/lib/db/schema"
 import { supabase } from "@/lib/supabase"
 import { fetcher, CACHE_KEYS } from "@/lib/swr/config"
+import { isFeatureEnabled } from "@/lib/feature-flags"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [supabaseUser, setSupabaseUser] = useState<any>(null);
