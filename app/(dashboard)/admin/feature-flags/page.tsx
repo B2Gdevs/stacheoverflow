@@ -50,6 +50,7 @@ export default function FeatureFlagsPage() {
       const response = await fetch('/api/admin/feature-flags', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Ensure cookies are sent
         body: JSON.stringify({
           flagKey,
           enabled: !currentValue,
@@ -91,6 +92,7 @@ export default function FeatureFlagsPage() {
       const response = await fetch('/api/admin/feature-flags', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Ensure cookies are sent
         body: JSON.stringify({
           flagKey: formState.flagKey.toUpperCase(),
           enabled: formState.enabled,
