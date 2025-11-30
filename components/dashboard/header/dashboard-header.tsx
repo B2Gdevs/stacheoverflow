@@ -16,25 +16,6 @@ export function DashboardHeader({
 }: DashboardHeaderProps) {
   return (
     <div className="mb-8">
-      {/* Mobile: Show logo and branding */}
-      <div className="flex items-center gap-3 mb-4 sm:hidden">
-        <div className="relative w-10 h-10 flex-shrink-0">
-          <Image
-            src="/images/stacheoverflow-logo.png"
-            alt="StacheOverflow"
-            fill
-            sizes="40px"
-            className="object-contain"
-            priority
-          />
-        </div>
-        <div>
-          <h1 className="text-lg font-bold text-white leading-tight">
-            stache<span className="text-green-500">overflow</span>
-          </h1>
-          <p className="text-xs text-gray-400">Music Marketplace</p>
-        </div>
-      </div>
 
       {/* Title and Subtitle */}
       <div>
