@@ -58,29 +58,25 @@
 
 ---
 
-## Task 3: Redesign Admin Dashboard with Real Stats
+## Task 3: Admin Dashboard with Quick Action Cards
 **Status**: ⬜ Not Started  
 **Priority**: 🔴 Critical  
-**Estimated Time**: 3-4 hours
+**Estimated Time**: 1-2 hours
 
-**Objective**: Replace mock data with real stats and improve layout
+**Objective**: Create admin dashboard with quick action cards for all services
 
 **Steps**:
-- [ ] Create API endpoint `/api/admin/stats`
-- [ ] Fetch real data:
-  - Total users count
-  - Total beats/packs count
-  - Average price
-  - Total revenue (from purchases)
-  - Recent activity
-- [ ] Update admin dashboard to use real data
-- [ ] Add quick action cards:
-  - "Create Promo Code" → `/admin/promos`
-  - "Upload Beat" → `/admin/upload`
-  - "Create Beat Pack" → `/admin/edit-pack`
-  - "Manage Users" → `/admin/users`
-- [ ] Improve layout and styling
+- [ ] Simplify sidebar - remove individual admin links, keep only "Admin" link
+- [ ] Create quick action cards on admin dashboard:
+  - Subscriptions → `/admin/subscriptions`
+  - Beats → `/admin/upload` (upload) and `/admin/edit-pack` (packs)
+  - Users → `/admin/users`
+  - Feature Flags → `/admin/feature-flags`
+  - Promo Codes → `/admin/promos`
+- [ ] Add icons and descriptions to each card
+- [ ] Make cards clickable and visually appealing
 - [ ] Make mobile-responsive
+- [ ] (Optional) Add basic stats to cards (counts, etc.)
 
 **Files to Create**:
 - `app/api/admin/stats/route.ts`

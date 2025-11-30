@@ -103,43 +103,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }] : []),
   ]
 
-  // Admin navigation items - organized by category
+  // Admin navigation - single link to admin dashboard
+  // All admin tools accessible from dashboard
   const adminNavItems = [
-    // Main dashboard
     {
-      title: "Admin Dashboard",
+      title: "Admin",
       url: "/admin",
       icon: Shield,
     },
-    // Content management
-    {
-      title: "Upload Beat",
-      url: "/admin/upload",
-      icon: Upload,
-    },
-    // User management
-    {
-      title: "Users",
-      url: "/admin/users",
-      icon: Users,
-    },
-    // Configuration
-    {
-      title: "Feature Flags",
-      url: "/admin/feature-flags",
-      icon: Settings,
-    },
-    {
-      title: "Promo Codes",
-      url: "/admin/promos",
-      icon: Gift,
-    },
-    // Subscriptions (if enabled)
-    ...(subscriptionsEnabled ? [{
-      title: "Subscriptions",
-      url: "/admin/subscriptions",
-      icon: Settings,
-    }] : []),
   ]
 
   // Login/signup navigation items for unauthenticated users
