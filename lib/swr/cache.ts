@@ -1,4 +1,4 @@
-import { mutate, cache } from 'swr';
+import { mutate } from 'swr';
 import { CACHE_KEYS } from './config';
 
 /**
