@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Gift, Calendar, Users, X, Check, Loader2, Search } from 'lucide-react';
+import { Plus, Gift, Calendar, Users, X, Check, Loader2, Search, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -174,6 +174,68 @@ export default function PromoCodesPage() {
       }
     } catch (error) {
       console.error('Error updating promo code:', error);
+    }
+  };
+
+  const handleEdit = (promo: PromoCode) => {
+    setFormData({
+      code: promo.code,
+      description: promo.description || '',
+      discountType: promo.discountType,
+      discountValue: promo.discountValue,
+      assetId: promo.assetId?.toString() || '',
+      assetType: promo.assetType,
+      maxUses: promo.maxUses?.toString() || '',
+      validFrom: new Date(promo.validFrom).toISOString().split('T')[0],
+      validUntil: promo.validUntil ? new Date(promo.validUntil).toISOString().split('T')[0] : '',
+    });
+    setShowCreateForm(true);
+    // Scroll to form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this promo code? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      // Get Supabase session for auth header
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: HeadersInit = {};
+      
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
+      const response = await fetch(`/api/admin/promos/${id}`, {
+        method: 'DELETE',
+        headers,
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        addToast({
+          type: 'success',
+          title: 'Success',
+          description: 'Promo code deleted successfully',
+        });
+        fetchPromoCodes();
+      } else {
+        const error = await response.json();
+        addToast({
+          type: 'error',
+          title: 'Error',
+          description: error.error || 'Failed to delete promo code',
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting promo code:', error);
+      addToast({
+        type: 'error',
+        title: 'Error',
+        description: 'Failed to delete promo code',
+      });
     }
   };
 
@@ -476,9 +538,13 @@ export default function PromoCodesPage() {
                   {promo.validUntil && ` - ${new Date(promo.validUntil).toLocaleDateString()}`}
                 </span>
               </div>
-              {promo.assetId && (
+              {promo.assetId ? (
                 <div className="text-xs text-gray-400">
                   Asset ID: {promo.assetId} ({promo.assetType})
+                </div>
+              ) : (
+                <div className="text-xs text-green-400 font-medium">
+                  ✓ Unlocks all {promo.assetType === 'beat' ? 'beats' : 'packs'}
                 </div>
               )}
             </CardContent>

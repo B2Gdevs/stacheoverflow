@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { AppSidebar } from '@/components/navigation';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { Separator } from '@/components/ui/separator';
@@ -15,10 +15,37 @@ import { useSearchParams } from 'next/navigation';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isChecking, setIsChecking] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [promoModalOpen, setPromoModalOpen] = useState(false);
+
+  // Generate breadcrumbs based on pathname
+  const getBreadcrumbs = () => {
+    const paths = pathname.split('/').filter(Boolean);
+    const breadcrumbs = [
+      { label: 'Stacheoverflow', href: '/marketplace' }
+    ];
+
+    if (paths.length === 0) {
+      breadcrumbs.push({ label: 'Marketplace', href: null });
+    } else {
+      let currentPath = '';
+      paths.forEach((path, index) => {
+        currentPath += `/${path}`;
+        const label = path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ');
+        breadcrumbs.push({
+          label,
+          href: index === paths.length - 1 ? null : currentPath
+        });
+      });
+    }
+
+    return breadcrumbs;
+  };
+
+  const breadcrumbs = getBreadcrumbs();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -96,15 +123,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             {/* Desktop: Breadcrumb */}
             <Breadcrumb className="hidden md:flex flex-1">
               <BreadcrumbList>
-                <BreadcrumbItem>
-                  <BreadcrumbLink href="/marketplace" className="text-white hover:text-green-500">
-                    Stacheoverflow
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="text-gray-600" />
-                <BreadcrumbItem>
-                  <BreadcrumbPage className="text-white">Marketplace</BreadcrumbPage>
-                </BreadcrumbItem>
+                {breadcrumbs.map((crumb, index) => (
+                  <React.Fragment key={index}>
+                    <BreadcrumbItem>
+                      {crumb.href ? (
+                        <BreadcrumbLink href={crumb.href} className="text-white hover:text-green-500">
+                          {crumb.label}
+                        </BreadcrumbLink>
+                      ) : (
+                        <BreadcrumbPage className="text-white">{crumb.label}</BreadcrumbPage>
+                      )}
+                    </BreadcrumbItem>
+                    {index < breadcrumbs.length - 1 && (
+                      <BreadcrumbSeparator className="text-gray-600" />
+                    )}
+                  </React.Fragment>
+                ))}
               </BreadcrumbList>
             </Breadcrumb>
 
