@@ -519,25 +519,50 @@ export default function PromoCodesPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {promoCodes.map((promo) => (
-          <Card key={promo.id} className="bg-gray-900 border-gray-700">
+          <Card 
+            key={promo.id} 
+            className={cn(
+              "bg-gray-900 border-gray-700 transition-all",
+              "hover:border-gray-600 hover:shadow-lg cursor-pointer"
+            )}
+            onClick={() => handleEdit(promo)}
+          >
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-white font-mono text-lg">{promo.code}</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleToggleActive(promo.id, promo.isActive)}
-                  className={cn(
-                    "h-8 w-8",
-                    promo.isActive === 1 ? "text-green-400" : "text-gray-500"
-                  )}
-                >
-                  {promo.isActive === 1 ? (
-                    <Check className={getIconSize('sm')} />
-                  ) : (
-                    <X className={getIconSize('sm')} />
-                  )}
-                </Button>
+                <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(promo.id);
+                    }}
+                    className="h-8 w-8 text-gray-400 hover:text-red-400"
+                    title="Delete promo code"
+                  >
+                    <Trash2 className={getIconSize('sm')} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleActive(promo.id, promo.isActive);
+                    }}
+                    className={cn(
+                      "h-8 w-8",
+                      promo.isActive === 1 ? "text-green-400" : "text-gray-500"
+                    )}
+                    title={promo.isActive === 1 ? "Deactivate" : "Activate"}
+                  >
+                    {promo.isActive === 1 ? (
+                      <Check className={getIconSize('sm')} />
+                    ) : (
+                      <X className={getIconSize('sm')} />
+                    )}
+                  </Button>
+                </div>
               </div>
               {promo.description && (
                 <CardDescription className="text-gray-400">{promo.description}</CardDescription>
