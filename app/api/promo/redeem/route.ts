@@ -90,44 +90,86 @@ export async function POST(request: NextRequest) {
           // Specific asset unlock
           const assetId = promoCode.assetId;
 
-      // Create redemption record
-      const [redemption] = await db
-        .insert(promoCodeRedemptions)
-        .values({
-          promoCodeId: promoCode.id,
-          userId: user.id,
-          assetId: assetId
-        })
-        .returning();
+          // Create redemption record
+          await db.insert(promoCodeRedemptions).values({
+            promoCodeId: promoCode.id,
+            userId: user.id,
+            assetId: assetId
+          });
 
-      // Increment uses count
-      await db
-        .update(promoCodes)
-        .set({
-          usesCount: promoCode.usesCount + 1,
-          updatedAt: new Date()
-        })
-        .where(eq(promoCodes.id, promoCode.id));
+          // Create a purchase record with $0 amount to grant download access
+          if (promoCode.assetType === 'beat') {
+            await db.insert(purchases).values({
+              userId: user.id,
+              beatId: assetId,
+              amount: 0, // Free
+              status: 'completed',
+              purchasedAt: new Date(),
+            });
+          }
+          // TODO: Handle 'pack' assetType if needed
 
-      // Create a purchase record with $0 amount to grant download access
-      const [purchase] = await db
-        .insert(purchases)
-        .values({
-          userId: user.id,
-          beatId: assetId,
-          amount: 0, // Free
-          status: 'completed',
-          purchasedAt: new Date()
-        })
-        .returning();
+          // Increment uses count
+          await db
+            .update(promoCodes)
+            .set({
+              usesCount: promoCode.usesCount + 1,
+              updatedAt: new Date()
+            })
+            .where(eq(promoCodes.id, promoCode.id));
 
-      return NextResponse.json({
-        success: true,
-        message: 'Promo code redeemed successfully!',
-        assetId: assetId,
-        assetType: promoCode.assetType,
-        purchaseId: purchase.id
-      });
+          return NextResponse.json({
+            success: true,
+            message: 'Promo code redeemed successfully!',
+            assetId: assetId,
+            assetType: promoCode.assetType,
+            unlocksAll: false
+          });
+        } else {
+          // Unlocks all assets - create purchase records for all published beats
+          await db.insert(promoCodeRedemptions).values({
+            promoCodeId: promoCode.id,
+            userId: user.id,
+            assetId: 0 // Special marker for "all assets"
+          });
+
+          // Get all published beats and create purchase records for each
+          const { beats } = await import('@/lib/db/schema');
+          const allBeats = await db
+            .select({ id: beats.id })
+            .from(beats)
+            .where(eq(beats.published, 1));
+
+          // Create purchase records for all beats
+          if (allBeats.length > 0) {
+            await db.insert(purchases).values(
+              allBeats.map(beat => ({
+                userId: user.id,
+                beatId: beat.id,
+                amount: 0, // Free
+                status: 'completed',
+                purchasedAt: new Date(),
+              }))
+            );
+          }
+
+          // Increment uses count
+          await db
+            .update(promoCodes)
+            .set({
+              usesCount: promoCode.usesCount + 1,
+              updatedAt: new Date()
+            })
+            .where(eq(promoCodes.id, promoCode.id));
+
+          return NextResponse.json({
+            success: true,
+            message: 'Promo code redeemed successfully! You now have access to all assets!',
+            unlocksAll: true,
+            assetsUnlocked: allBeats.length
+          });
+        }
+      }
     } catch (error) {
       console.error('Error redeeming promo code:', error);
       return NextResponse.json(
