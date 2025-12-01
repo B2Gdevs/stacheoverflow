@@ -13,6 +13,7 @@ import { FilterDrawer } from './filters/filter-drawer';
 import { QuickFilters } from './filters/quick-filters';
 import { MusicGrid } from './grid/music-grid';
 import { NoMusic } from './empty-states/no-music';
+import { PackDetailsDialog } from './pack-details-dialog';
 
 // Helper to get image URL - uses imageUrl from API response (Supabase signed URL)
 function getImageUrl(beat: any): string {
@@ -190,6 +191,15 @@ export function DashboardContent() {
       <GlobalAudioPlayer
         onPurchase={handlePurchase}
         onDownload={handleDownload}
+      />
+
+      {/* Pack Details Dialog */}
+      <PackDetailsDialog
+        pack={selectedPack}
+        open={!!selectedPack}
+        onOpenChange={(open) => !open && setSelectedPack(null)}
+        currentUser={currentUser}
+        getImageUrl={getImageUrl}
       />
     </div>
   );

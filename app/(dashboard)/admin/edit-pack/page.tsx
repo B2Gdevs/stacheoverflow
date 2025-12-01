@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { useBeatPacks, useUser } from '@/lib/swr/hooks';
 import Link from 'next/link';
 import { MusicGrid } from '@/components/dashboard/grid/music-grid';
+import { PackDetailsDialog } from '@/components/dashboard/pack-details-dialog';
 
 // Helper to get image URL - uses imageUrl from API response (Supabase signed URL)
 function getImageUrl(item: any): string {
@@ -34,6 +35,7 @@ export default function EditPackListPage() {
   const { packs, isLoading, refresh } = useBeatPacks();
   const { user: currentUser } = useUser();
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedPack, setSelectedPack] = useState<any>(null);
 
   const filteredPacks = packs.filter(pack => 
     !searchQuery || 
@@ -46,8 +48,8 @@ export default function EditPackListPage() {
   };
 
   const handleViewPackDetails = (pack: any) => {
-    // For admin, clicking on pack opens the wizard for editing
-    router.push(`/admin/edit-pack/${pack.id}`);
+    // Open pack details modal
+    setSelectedPack(pack);
   };
 
   if (isLoading) {
@@ -115,6 +117,15 @@ export default function EditPackListPage() {
           )}
         </div>
       )}
+
+      {/* Pack Details Dialog */}
+      <PackDetailsDialog
+        pack={selectedPack}
+        open={!!selectedPack}
+        onOpenChange={(open) => !open && setSelectedPack(null)}
+        currentUser={currentUser}
+        getImageUrl={getImageUrl}
+      />
     </div>
   );
 }
