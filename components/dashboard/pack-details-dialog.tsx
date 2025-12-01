@@ -1,11 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Package, X, ShoppingCart, Edit, Music } from 'lucide-react';
+import { Package, X, ShoppingCart, Edit, Music, Loader2 } from 'lucide-react';
 import { getIconSize } from '@/lib/utils/icon-sizes';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/components/ui/toast';
 
 interface PackDetailsDialogProps {
   pack: any | null;
@@ -23,11 +25,65 @@ export function PackDetailsDialog({
   getImageUrl
 }: PackDetailsDialogProps) {
   const router = useRouter();
+  const { addToast } = useToast();
+  const [isPurchasing, setIsPurchasing] = useState(false);
 
   if (!pack) return null;
 
-  const individualTotal = pack.beats?.reduce((sum: number, beat: any) => sum + beat.price, 0) || 0;
-  const savings = individualTotal - pack.price;
+  const individualTotal = pack.beats?.reduce((sum: number, beat: any) => sum + (beat.price / 100), 0) || 0;
+  const packPrice = pack.price / 100;
+  const savings = individualTotal - packPrice;
+
+  const handlePurchase = async () => {
+    if (!pack.id || !pack.price) {
+      addToast({
+        type: 'error',
+        title: 'Error',
+        description: 'Invalid pack information',
+      });
+      return;
+    }
+
+    setIsPurchasing(true);
+
+    try {
+      // For now, packs use the same purchase flow as beats
+      // TODO: Create pack-specific purchase endpoint if needed
+      const response = await fetch('/api/purchases', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          beatId: pack.id, // Using beatId field for pack purchases (may need packId field later)
+          amount: pack.price,
+          successUrl: `${window.location.origin}/marketplace?purchase=success`,
+          cancelUrl: `${window.location.origin}/marketplace?purchase=cancelled`,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create checkout session');
+      }
+
+      // Redirect to Stripe checkout
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
+    } catch (error) {
+      console.error('Error initiating purchase:', error);
+      addToast({
+        type: 'error',
+        title: 'Purchase Failed',
+        description: error instanceof Error ? error.message : 'Failed to start purchase process',
+      });
+      setIsPurchasing(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -78,7 +134,7 @@ export function PackDetailsDialog({
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400">Price:</span>
-                  <span className="text-2xl font-bold text-amber-500">${pack.price.toFixed(2)}</span>
+                  <span className="text-2xl font-bold text-amber-500">${packPrice.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400">Beats in pack:</span>
@@ -99,7 +155,7 @@ export function PackDetailsDialog({
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Pack price:</span>
-                  <span className="text-amber-500 font-semibold">${pack.price.toFixed(2)}</span>
+                  <span className="text-amber-500 font-semibold">${packPrice.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between pt-2 border-t border-gray-700">
                   <span className="text-gray-400">You save:</span>
@@ -136,7 +192,7 @@ export function PackDetailsDialog({
                       <p className="text-white font-medium truncate">{beat.title}</p>
                       <p className="text-gray-400 text-sm truncate">by {beat.artist}</p>
                     </div>
-                    <span className="text-amber-500 font-semibold ml-4">${beat.price.toFixed(2)}</span>
+                    <span className="text-amber-500 font-semibold ml-4">${(beat.price / 100).toFixed(2)}</span>
                   </div>
                 ))}
               </div>
@@ -146,25 +202,34 @@ export function PackDetailsDialog({
           {/* Actions */}
           <div className="flex gap-2 pt-4 border-t border-gray-700">
             {currentUser?.role === 'admin' ? (
-              <>
-                <Button
-                  variant="outline"
-                  className="flex-1 bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
-                  onClick={() => {
-                    onOpenChange(false);
-                    router.push(`/admin/edit-pack/${pack.id}`);
-                  }}
-                >
-                  <Edit className={cn(getIconSize('sm'), "mr-2")} />
-                  Edit Pack
-                </Button>
-              </>
+              <Button
+                variant="outline"
+                className="flex-1 bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
+                onClick={() => {
+                  onOpenChange(false);
+                  router.push(`/admin/edit-pack/${pack.id}`);
+                }}
+              >
+                <Edit className={cn(getIconSize('sm'), "mr-2")} />
+                Edit Pack
+              </Button>
             ) : (
               <Button
                 className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold"
+                onClick={handlePurchase}
+                disabled={isPurchasing || !pack.published}
               >
-                <ShoppingCart className={cn(getIconSize('sm'), "mr-2")} />
-                Buy Pack
+                {isPurchasing ? (
+                  <>
+                    <Loader2 className={cn(getIconSize('sm'), "mr-2 animate-spin")} />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className={cn(getIconSize('sm'), "mr-2")} />
+                    Buy Pack ${pack.price.toFixed(2)}
+                  </>
+                )}
               </Button>
             )}
             <Button

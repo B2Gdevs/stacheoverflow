@@ -147,13 +147,55 @@
 
 ---
 
+### Task 6: Admin User Impersonation Tool
+**Status**: ⬜ Not Started  
+**Priority**: 🔴 Critical (Before Testing Purchases)  
+**Estimated Time**: 2-3 hours
+
+**Objective**: Allow admins to impersonate users for testing purchases and user experience
+
+**Steps**:
+- [ ] Create API endpoint `/api/admin/impersonate` (POST/DELETE)
+- [ ] Add impersonation state to session/context
+- [ ] Create admin UI to search and select user to impersonate
+- [ ] Show clear banner when impersonating (with "Stop Impersonating" button)
+- [ ] Ensure impersonation works with Supabase OAuth sessions
+- [ ] Add to admin dashboard quick actions
+
+**Files to Create**:
+- `app/api/admin/impersonate/route.ts`
+- `app/(dashboard)/admin/impersonate/page.tsx`
+- `components/admin/impersonation-banner.tsx`
+
+**Files to Modify**:
+- `lib/db/queries.ts` (add impersonation check to getUser)
+- `app/(dashboard)/admin/page.tsx` (add impersonation quick action)
+- `app/(dashboard)/layout.tsx` (show impersonation banner)
+
+**Acceptance Criteria**:
+- [ ] Admin can search for users by email/name
+- [ ] Admin can start impersonation with one click
+- [ ] Clear visual indicator when impersonating
+- [ ] All API routes respect impersonation (act as that user)
+- [ ] Can stop impersonation easily
+- [ ] Works with both OAuth and email/password users
+
+**Security Considerations**:
+- Only admins can impersonate
+- Log all impersonation actions
+- Clear session on logout
+- Prevent impersonating other admins (optional)
+
+---
+
 ## Next Steps
 
-1. **Start with Task 1** - Verify the purchase flow works
-2. **Then Task 3** - Ensure downloads work
-3. **Then Task 2** - Create purchase history page
-4. **Then Task 4** - Add purchase indicators
-5. **Finally Task 5** - Test integration
+1. **Start with Task 6** - Build impersonation tool (CRITICAL - needed before testing)
+2. **Then Task 1** - Verify the purchase flow works
+3. **Then Task 3** - Ensure downloads work
+4. **Then Task 2** - Create purchase history page
+5. **Then Task 4** - Add purchase indicators
+6. **Finally Task 5** - Test integration
 
 ---
 
