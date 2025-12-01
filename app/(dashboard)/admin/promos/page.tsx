@@ -94,8 +94,11 @@ export default function PromoCodesPage() {
         headers['Authorization'] = `Bearer ${session.access_token}`;
       }
 
-      const response = await fetch('/api/admin/promos', {
-        method: 'POST',
+      const url = editingPromo ? `/api/admin/promos/${editingPromo.id}` : '/api/admin/promos';
+      const method = editingPromo ? 'PATCH' : 'POST';
+
+      const response = await fetch(url, {
+        method,
         headers,
         credentials: 'include',
         body: JSON.stringify({
@@ -110,9 +113,10 @@ export default function PromoCodesPage() {
         addToast({
           type: 'success',
           title: 'Success',
-          description: 'Promo code created successfully!',
+          description: editingPromo ? 'Promo code updated successfully!' : 'Promo code created successfully!',
         });
         setShowCreateForm(false);
+        setEditingPromo(null);
         setFormData({
           code: '',
           description: '',
@@ -178,6 +182,7 @@ export default function PromoCodesPage() {
   };
 
   const handleEdit = (promo: PromoCode) => {
+    setEditingPromo(promo);
     setFormData({
       code: promo.code,
       description: promo.description || '',
@@ -255,11 +260,27 @@ export default function PromoCodesPage() {
           <p className="text-gray-400">Create and manage promo codes for free assets</p>
         </div>
         <Button
-          onClick={() => setShowCreateForm(!showCreateForm)}
+          onClick={() => {
+            setShowCreateForm(!showCreateForm);
+            if (showCreateForm) {
+              setEditingPromo(null);
+              setFormData({
+                code: '',
+                description: '',
+                discountType: 'free_asset',
+                discountValue: null,
+                assetId: '',
+                assetType: 'beat',
+                maxUses: '',
+                validFrom: new Date().toISOString().split('T')[0],
+                validUntil: '',
+              });
+            }
+          }}
           className="bg-green-500 hover:bg-green-600"
         >
           <Plus className={cn(getIconSize('sm'), "mr-2")} />
-          Create Promo Code
+          {showCreateForm ? 'Cancel' : 'Create Promo Code'}
         </Button>
       </div>
 

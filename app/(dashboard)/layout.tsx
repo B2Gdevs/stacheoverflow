@@ -24,7 +24,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   // Generate breadcrumbs based on pathname
   const getBreadcrumbs = () => {
     const paths = pathname.split('/').filter(Boolean);
-    const breadcrumbs = [
+    const breadcrumbs: Array<{ label: string; href: string | null }> = [
       { label: 'Stacheoverflow', href: '/marketplace' }
     ];
 
