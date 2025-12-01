@@ -56,7 +56,7 @@ export function PackDetailsDialog({
         },
         body: JSON.stringify({
           beatId: pack.id, // Using beatId field for pack purchases (may need packId field later)
-          amount: pack.price,
+          amount: packPrice, // Already converted from cents to dollars
           successUrl: `${window.location.origin}/marketplace?purchase=success`,
           cancelUrl: `${window.location.origin}/marketplace?purchase=cancelled`,
         }),

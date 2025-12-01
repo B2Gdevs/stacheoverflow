@@ -1,10 +1,13 @@
 'use client';
 
-import { ShoppingCart, Edit, Trash2, Package } from 'lucide-react';
+import { useState } from 'react';
+import { ShoppingCart, Edit, Trash2, Package, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PlayButton } from '@/lib/audio';
 import { getIconSize } from '@/lib/utils/icon-sizes';
+import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/components/ui/toast';
 
 interface PackCardProps {
   pack: any;
@@ -26,6 +29,59 @@ export function PackCard({
   getImageUrl
 }: PackCardProps) {
   const router = useRouter();
+  const { addToast } = useToast();
+  const [isPurchasing, setIsPurchasing] = useState(false);
+
+  const handlePurchase = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click events
+    
+    if (!pack.id || !pack.price || !pack.published) {
+      addToast({
+        type: 'error',
+        title: 'Error',
+        description: 'This pack is not available for purchase',
+      });
+      return;
+    }
+
+    setIsPurchasing(true);
+
+    try {
+      const response = await fetch('/api/purchases', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          beatId: pack.id, // Using beatId field for pack purchases
+          amount: pack.price,
+          successUrl: `${window.location.origin}/marketplace?purchase=success`,
+          cancelUrl: `${window.location.origin}/marketplace?purchase=cancelled`,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create checkout session');
+      }
+
+      // Redirect to Stripe checkout
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
+    } catch (error) {
+      console.error('Error initiating purchase:', error);
+      addToast({
+        type: 'error',
+        title: 'Purchase Failed',
+        description: error instanceof Error ? error.message : 'Failed to start purchase process',
+      });
+      setIsPurchasing(false);
+    }
+  };
 
   return (
     <div className="group bg-black rounded-lg border-2 border-gray-700 hover:border-amber-500 transition-all duration-200 hover:shadow-lg">
@@ -119,9 +175,20 @@ export function PackCard({
             <Button 
               size="sm" 
               className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs cursor-pointer min-h-[44px] sm:min-h-0"
+              onClick={handlePurchase}
+              disabled={isPurchasing || !pack.published}
             >
-              <ShoppingCart className={`${getIconSize('sm')} mr-1`} />
-              Buy Pack
+              {isPurchasing ? (
+                <>
+                  <Loader2 className={cn(getIconSize('sm'), "mr-1 animate-spin")} />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <ShoppingCart className={cn(getIconSize('sm'), "mr-1")} />
+                  Buy Pack ${pack.price.toFixed(2)}
+                </>
+              )}
             </Button>
           )}
 
