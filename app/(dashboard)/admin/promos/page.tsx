@@ -407,7 +407,7 @@ export default function PromoCodesPage() {
             <div className="flex gap-2">
               <Button
                 onClick={handleCreate}
-                disabled={isCreating || !formData.code || !formData.assetId}
+                disabled={isCreating || !formData.code}
                 className="bg-green-500 hover:bg-green-600"
               >
                 {isCreating ? (
