@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { PackEditForm } from '@/components/forms';
+import { BeatWizard } from '@/components/forms/beat-wizard';
+import { WizardMode } from '@/lib/wizard';
 import { useBeatPack } from '@/lib/swr/hooks';
 
 export default function EditPackPage() {
@@ -12,51 +12,62 @@ export default function EditPackPage() {
 
   const { pack, isError: error, isLoading } = useBeatPack(packId || null);
 
-  const handleComplete = (result: any) => {
-    console.log('Pack update completed:', result);
-    router.push('/admin/edit-pack');
+  if (isError) {
+    return (
+      <div className="min-h-screen bg-black text-white p-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center gap-4 mb-8">
+            <button
+              onClick={() => router.back()}
+              className="px-4 py-2 border border-gray-600 text-gray-300 hover:bg-gray-800 rounded"
+            >
+              ← Back
+            </button>
+            <h1 className="text-3xl font-bold">Edit Beat Pack</h1>
+          </div>
+          <div className="bg-gray-900 border border-gray-700 rounded-lg p-8">
+            <p className="text-red-400">Error loading pack</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading || !pack) {
+    return (
+      <div className="min-h-screen bg-black text-white p-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center gap-4 mb-8">
+            <button
+              onClick={() => router.back()}
+              className="px-4 py-2 border border-gray-600 text-gray-300 hover:bg-gray-800 rounded"
+            >
+              ← Back
+            </button>
+            <h1 className="text-3xl font-bold">Edit Beat Pack</h1>
+          </div>
+          <div className="bg-gray-900 border border-gray-700 rounded-lg p-8">
+            <p className="text-gray-300">Loading pack...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Convert pack to format expected by wizard (with isPack flag)
+  const packForWizard = {
+    ...pack,
+    isPack: 1, // Mark as pack so wizard knows it's a pack
+    price: pack.price, // Keep in cents (wizard will convert)
+    published: pack.published === 1,
+    beats: pack.beats || []
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white">Loading pack...</div>
-      </div>
-    );
-  }
-
-  if (error || !pack) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white">Error loading pack or pack not found</div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-black">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-white mb-2">Edit Beat Pack</h1>
-          <p className="text-gray-300">Update pack details and publish status</p>
-        </div>
-
-        <PackEditForm
-          pack={{
-            id: pack.id,
-            title: pack.title,
-            artist: pack.artist,
-            genre: pack.genre,
-            price: pack.price / 100, // Convert from cents to dollars for display
-            description: pack.description,
-            imageFile: pack.imageFile,
-            published: pack.published === 1,
-            beats: pack.beats || []
-          }}
-          onCancel={() => router.back()}
-          onComplete={handleComplete}
-        />
-      </div>
-    </div>
+    <BeatWizard 
+      mode={WizardMode.EDIT}
+      initialBeat={packForWizard}
+      onCancel={() => router.push('/admin/edit-pack')} 
+    />
   );
 }

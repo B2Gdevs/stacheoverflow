@@ -354,7 +354,12 @@ export function BeatWizard({ mode, initialBeat, onCancel, onComplete }: BeatWiza
         });
         
         if (mode === WizardMode.EDIT) {
-          router.push('/admin');
+          // Redirect to appropriate admin page based on what was edited
+          if (data.uploadType === UploadType.PACK) {
+            router.push('/admin/edit-pack');
+          } else {
+            router.push('/admin');
+          }
         } else {
           router.push('/dashboard');
         }
