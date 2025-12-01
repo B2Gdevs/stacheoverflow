@@ -30,9 +30,8 @@ export function PackDetailsDialog({
 
   if (!pack) return null;
 
-  const individualTotal = pack.beats?.reduce((sum: number, beat: any) => sum + (beat.price / 100), 0) || 0;
-  const packPrice = pack.price / 100;
-  const savings = individualTotal - packPrice;
+  const individualTotal = pack.beats?.reduce((sum: number, beat: any) => sum + beat.price, 0) || 0;
+  const savings = individualTotal - pack.price;
 
   const handlePurchase = async () => {
     if (!pack.id || !pack.price) {
@@ -56,7 +55,7 @@ export function PackDetailsDialog({
         },
         body: JSON.stringify({
           beatId: pack.id, // Using beatId field for pack purchases (may need packId field later)
-          amount: packPrice, // Already converted from cents to dollars
+          amount: pack.price,
           successUrl: `${window.location.origin}/marketplace?purchase=success`,
           cancelUrl: `${window.location.origin}/marketplace?purchase=cancelled`,
         }),
@@ -134,7 +133,7 @@ export function PackDetailsDialog({
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400">Price:</span>
-                  <span className="text-2xl font-bold text-amber-500">${packPrice.toFixed(2)}</span>
+                  <span className="text-2xl font-bold text-amber-500">${pack.price.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400">Beats in pack:</span>
@@ -155,7 +154,7 @@ export function PackDetailsDialog({
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Pack price:</span>
-                  <span className="text-amber-500 font-semibold">${packPrice.toFixed(2)}</span>
+                  <span className="text-amber-500 font-semibold">${pack.price.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between pt-2 border-t border-gray-700">
                   <span className="text-gray-400">You save:</span>
@@ -192,7 +191,7 @@ export function PackDetailsDialog({
                       <p className="text-white font-medium truncate">{beat.title}</p>
                       <p className="text-gray-400 text-sm truncate">by {beat.artist}</p>
                     </div>
-                    <span className="text-amber-500 font-semibold ml-4">${(beat.price / 100).toFixed(2)}</span>
+                    <span className="text-amber-500 font-semibold ml-4">${beat.price.toFixed(2)}</span>
                   </div>
                 ))}
               </div>
