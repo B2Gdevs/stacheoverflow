@@ -84,15 +84,11 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      // For free_asset type, we need assetId
-      if (promoCode.discountType === 'free_asset' && !promoCode.assetId) {
-        return NextResponse.json({
-          success: false,
-          error: 'Invalid promo code configuration'
-        }, { status: 400 });
-      }
-
-      const assetId = promoCode.assetId!;
+      // Handle redemption based on whether this unlocks a specific asset or all assets
+      if (promoCode.discountType === 'free_asset') {
+        if (promoCode.assetId) {
+          // Specific asset unlock
+          const assetId = promoCode.assetId;
 
       // Create redemption record
       const [redemption] = await db
