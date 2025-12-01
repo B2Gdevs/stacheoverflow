@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Image, Save, Trash2, ArrowLeft, Plus, X, Music, Upload } from 'lucide-react';
 import useSWR from 'swr';
 import { BeatSearch } from '@/components/utils';
-import { createClient } from '@/utils/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 interface Beat {
   id: number;
@@ -55,7 +55,6 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function PackEditForm({ pack, onCancel, onComplete }: PackEditFormProps) {
   const router = useRouter();
-  const supabase = createClient();
   
   const [formData, setFormData] = useState({
     title: pack.title,
