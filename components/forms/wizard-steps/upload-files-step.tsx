@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { BeatData, useWizard } from '@/lib/wizard';
 import { APP_CONFIG, FileSizeUtils, FileTypeUtils } from '@/lib/constants';
@@ -13,6 +13,16 @@ export function UploadFilesStep() {
   const [dragActive, setDragActive] = useState(false);
   const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+
+  // Cleanup object URLs on unmount or when image changes
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl && imagePreviewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreviewUrl);
+      }
+    };
+  }, [imagePreviewUrl]);
 
   console.log('🎵 UploadFilesStep: Current beat data:', beat);
   console.log('🎵 UploadFilesStep: Beat audioFiles:', beat.audioFiles);
@@ -25,19 +35,28 @@ export function UploadFilesStep() {
       const existingFile = beat.existingFiles?.image;
       
       if (newFile) {
+        // Clean up previous preview URL
+        if (imagePreviewUrl && imagePreviewUrl.startsWith('blob:')) {
+          URL.revokeObjectURL(imagePreviewUrl);
+        }
+        const previewUrl = URL.createObjectURL(newFile);
+        setImagePreviewUrl(previewUrl);
         return {
           name: newFile.name,
           size: FileSizeUtils.formatFileSize(newFile.size),
           isNew: true,
           file: newFile,
-          preview: URL.createObjectURL(newFile)
+          preview: previewUrl
         };
       } else if (existingFile) {
         const fileName = existingFile.split('/').pop() || existingFile;
         // Get the full URL for existing images
-        const imageUrl = existingFile.startsWith('http') 
-          ? existingFile 
-          : `/api/files/${existingFile}`;
+        // Try multiple possible URL formats
+        let imageUrl = existingFile;
+        if (!existingFile.startsWith('http')) {
+          // Try with /api/files/ prefix
+          imageUrl = `/api/files/${existingFile}`;
+        }
         return {
           name: fileName,
           size: 'Existing file',
@@ -45,6 +64,12 @@ export function UploadFilesStep() {
           file: null,
           preview: imageUrl
         };
+      } else {
+        // Clean up preview URL if no file
+        if (imagePreviewUrl && imagePreviewUrl.startsWith('blob:')) {
+          URL.revokeObjectURL(imagePreviewUrl);
+          setImagePreviewUrl(null);
+        }
       }
     } else {
       const newFile = beat.audioFiles[type];
