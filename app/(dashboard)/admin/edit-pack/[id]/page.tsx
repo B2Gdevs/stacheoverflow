@@ -14,7 +14,7 @@ export default function EditPackPage() {
 
   const handleComplete = (result: any) => {
     console.log('Pack update completed:', result);
-    router.push('/dashboard');
+    router.push('/admin/edit-pack');
   };
 
   if (isLoading) {

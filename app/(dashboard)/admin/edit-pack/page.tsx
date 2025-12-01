@@ -21,12 +21,12 @@ export default function EditPackListPage() {
 
   const filteredPacks = packs.filter(pack => 
     !searchQuery || 
-    pack.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    pack.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     pack.artist?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleDelete = async (packId: number, packName: string) => {
-    if (!confirm(`Are you sure you want to delete "${packName}"? This action cannot be undone.`)) {
+  const handleDelete = async (packId: number, packTitle: string) => {
+    if (!confirm(`Are you sure you want to delete "${packTitle}"? This action cannot be undone.`)) {
       return;
     }
 
@@ -49,7 +49,7 @@ export default function EditPackListPage() {
         addToast({
           type: 'success',
           title: 'Pack Deleted',
-          description: `"${packName}" has been deleted successfully.`,
+          description: `"${packTitle}" has been deleted successfully.`,
         });
         refresh();
       } else {
@@ -121,7 +121,7 @@ export default function EditPackListPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <CardTitle className="text-white text-lg mb-1">{pack.name}</CardTitle>
+                    <CardTitle className="text-white text-lg mb-1">{pack.title}</CardTitle>
                     {pack.artist && (
                       <CardDescription className="text-gray-400">by {pack.artist}</CardDescription>
                     )}
@@ -132,7 +132,7 @@ export default function EditPackListPage() {
                       size="icon"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDelete(pack.id, pack.name);
+                        handleDelete(pack.id, pack.title);
                       }}
                       className="h-8 w-8 text-gray-400 hover:text-red-400"
                       title="Delete pack"
