@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Image, Save, Trash2, ArrowLeft, Plus, X, Music, Upload } from 'lucide-react';
 import useSWR from 'swr';
 import { BeatSearch } from '@/components/utils';
+import { createClient } from '@/utils/supabase/client';
 
 interface Beat {
   id: number;
@@ -54,6 +55,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function PackEditForm({ pack, onCancel, onComplete }: PackEditFormProps) {
   const router = useRouter();
+  const supabase = createClient();
   
   const [formData, setFormData] = useState({
     title: pack.title,
@@ -136,12 +138,22 @@ export default function PackEditForm({ pack, onCancel, onComplete }: PackEditFor
 
       // Upload new image if selected
       if (imageFile) {
-        const formData = new FormData();
-        formData.append('file', imageFile);
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', imageFile);
+
+        // Get Supabase session for auth header
+        const { data: { session } } = await supabase.auth.getSession();
+        const headers: HeadersInit = {};
+        
+        if (session?.access_token) {
+          headers['Authorization'] = `Bearer ${session.access_token}`;
+        }
 
         const uploadResponse = await fetch('/api/upload', {
           method: 'POST',
-          body: formData,
+          headers,
+          credentials: 'include',
+          body: uploadFormData,
         });
 
         if (!uploadResponse.ok) {
