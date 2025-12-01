@@ -501,7 +501,7 @@ export default function PromoCodesPage() {
                 ) : (
                   <>
                     <Check className={cn(getIconSize('sm'), "mr-2")} />
-                    Create
+                    {editingPromo ? 'Update' : 'Create'}
                   </>
                 )}
               </Button>
