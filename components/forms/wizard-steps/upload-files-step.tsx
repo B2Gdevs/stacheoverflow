@@ -14,6 +14,7 @@ export function UploadFilesStep() {
   const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
 
   // Cleanup object URLs on unmount or when image changes
   useEffect(() => {
@@ -24,10 +25,34 @@ export function UploadFilesStep() {
     };
   }, [imagePreviewUrl]);
 
-  console.log('🎵 UploadFilesStep: Current beat data:', beat);
-  console.log('🎵 UploadFilesStep: Beat audioFiles:', beat.audioFiles);
-  console.log('🎵 UploadFilesStep: Beat existingFiles:', beat.existingFiles);
-  console.log('🎵 UploadFilesStep: Beat imageFile:', beat.imageFile);
+  // Fetch signed URL for existing images when image section is active
+  useEffect(() => {
+    const fetchSignedUrl = async () => {
+      const existingFile = beat.existingFiles?.image;
+      if (existingFile && !existingFile.startsWith('http') && activeSection === 'image') {
+        try {
+          const response = await fetch(`/api/files/signed-url?filePath=${encodeURIComponent(existingFile)}`);
+          if (response.ok) {
+            const data = await response.json();
+            setExistingImageUrl(data.signedUrl || data.url);
+          } else {
+            // Fallback to direct API route
+            setExistingImageUrl(`/api/files/${existingFile}`);
+          }
+        } catch (error) {
+          // Fallback to direct API route
+          setExistingImageUrl(`/api/files/${existingFile}`);
+        }
+      } else if (existingFile && existingFile.startsWith('http')) {
+        setExistingImageUrl(existingFile);
+      } else {
+        setExistingImageUrl(null);
+      }
+    };
+
+    fetchSignedUrl();
+  }, [beat.existingFiles?.image, activeSection]);
+
 
   const getFileInfo = (type: 'mp3' | 'wav' | 'stems' | 'image') => {
     if (type === 'image') {
@@ -50,13 +75,8 @@ export function UploadFilesStep() {
         };
       } else if (existingFile) {
         const fileName = existingFile.split('/').pop() || existingFile;
-        // Get the full URL for existing images
-        // Try multiple possible URL formats
-        let imageUrl = existingFile;
-        if (!existingFile.startsWith('http')) {
-          // Try with /api/files/ prefix
-          imageUrl = `/api/files/${existingFile}`;
-        }
+        // Use the signed URL from state if available, otherwise fallback
+        const imageUrl = existingImageUrl || (existingFile.startsWith('http') ? existingFile : `/api/files/${existingFile}`);
         return {
           name: fileName,
           size: 'Existing file',
@@ -134,12 +154,6 @@ export function UploadFilesStep() {
     }
   };
 
-  // Debug the specific MP3 file
-  console.log('🎵 UploadFilesStep: MP3 specific check:', {
-    mp3File: beat.audioFiles.mp3,
-    mp3Existing: beat.existingFiles?.mp3,
-    mp3Info: getFileInfo('mp3')
-  });
 
   const validateFile = (file: File, type: 'mp3' | 'wav' | 'stems' | 'image'): string | null => {
     // Check file type
@@ -158,20 +172,14 @@ export function UploadFilesStep() {
       return `File size (${FileSizeUtils.formatFileSize(file.size)}) exceeds maximum allowed size (${APP_CONFIG.FILE_LIMITS.MAX_FILE_SIZE_MB}MB)`;
     }
 
-    // Check if file is too large for Supabase (warning only)
-    if (FileSizeUtils.exceedsSupabaseLimit(file.size)) {
-      console.log(`⚠️ File ${file.name} (${FileSizeUtils.formatFileSize(file.size)}) exceeds Supabase limit, will use local storage`);
-    }
+    // Note: Files exceeding Supabase limit will use local storage automatically
 
     return null; // No errors
   };
 
   const handleFileUpload = useCallback((file: File, type: 'mp3' | 'wav' | 'stems' | 'image') => {
-    console.log(`🎵 UploadFilesStep: File upload for ${type}:`, file.name);
-    
     const error = validateFile(file, type);
     if (error) {
-      console.error(`❌ File validation failed for ${type}:`, error);
       setFileErrors(prev => ({ ...prev, [type]: error }));
       return;
     }
