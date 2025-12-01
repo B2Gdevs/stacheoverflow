@@ -29,15 +29,21 @@ export function UploadFilesStep() {
           name: newFile.name,
           size: FileSizeUtils.formatFileSize(newFile.size),
           isNew: true,
-          file: newFile
+          file: newFile,
+          preview: URL.createObjectURL(newFile)
         };
       } else if (existingFile) {
         const fileName = existingFile.split('/').pop() || existingFile;
+        // Get the full URL for existing images
+        const imageUrl = existingFile.startsWith('http') 
+          ? existingFile 
+          : `/api/files/${existingFile}`;
         return {
           name: fileName,
           size: 'Existing file',
           isNew: false,
-          file: null
+          file: null,
+          preview: imageUrl
         };
       }
     } else {
@@ -242,7 +248,11 @@ export function UploadFilesStep() {
             
             {/* Drag and Drop Area */}
             <div
-              className={`relative h-64 border-2 border-dashed rounded-xl transition-all duration-200 ${
+              className={`relative ${
+                activeSection === 'image' && currentFileInfo?.preview
+                  ? 'h-auto min-h-[400px]'
+                  : 'h-64'
+              } border-2 border-dashed rounded-xl transition-all duration-200 ${
                 dragActive
                   ? 'border-green-400 bg-green-400/10'
                   : fileErrors[activeSection]
@@ -266,43 +276,90 @@ export function UploadFilesStep() {
               
               <div className="flex flex-col items-center justify-center h-full p-6 text-center">
                 {currentFileInfo ? (
-                  <div className="space-y-4">
-                    {activeSection === 'image' && currentFileInfo.file ? (
-                      <img
-                        src={URL.createObjectURL(currentFileInfo.file)}
-                        alt="Preview"
-                        className="w-24 h-24 object-cover rounded-lg border-2 border-gray-600"
-                      />
+                  <div className="space-y-4 w-full">
+                    {activeSection === 'image' && currentFileInfo.preview ? (
+                      // Social media-style large image preview
+                      <div className="relative w-full max-w-md mx-auto">
+                        <div className="relative aspect-square rounded-xl overflow-hidden border-2 border-gray-600 bg-gray-900">
+                          <img
+                            src={currentFileInfo.preview}
+                            alt="Cover preview"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              // Fallback if image fails to load
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                            }}
+                          />
+                          {/* Overlay with file info */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                {currentFileInfo.isNew ? (
+                                  <CheckCircle className="w-5 h-5 text-green-400" />
+                                ) : (
+                                  <div className="w-5 h-5 bg-blue-400 rounded-full flex items-center justify-center">
+                                    <span className="text-xs text-white">📁</span>
+                                  </div>
+                                )}
+                                <span className="text-white text-sm font-medium">
+                                  {currentFileInfo.isNew ? 'New upload' : 'Existing file'}
+                                </span>
+                              </div>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeFile(activeSection);
+                                }}
+                                className="px-3 py-1.5 bg-red-500/90 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
+                              >
+                                <X className="w-4 h-4" />
+                                Remove
+                              </button>
+                            </div>
+                            <p className="text-white text-xs mt-1 truncate">{currentFileInfo.name}</p>
+                            <p className="text-gray-300 text-xs">{currentFileInfo.size}</p>
+                          </div>
+                        </div>
+                        {/* Click to change button */}
+                        <button
+                          onClick={() => fileInputRef.current?.click()}
+                          className="mt-3 w-full px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors font-semibold text-sm"
+                        >
+                          Change Image
+                        </button>
+                      </div>
                     ) : (
-                      <div className="w-16 h-16 bg-green-400/20 rounded-full flex items-center justify-center">
-                        {getSectionIcon(activeSection)}
+                      // Non-image file display
+                      <div className="space-y-4">
+                        <div className="w-16 h-16 bg-green-400/20 rounded-full flex items-center justify-center">
+                          {getSectionIcon(activeSection)}
+                        </div>
+                        <div className="space-y-2">
+                          <p className="text-white font-semibold text-lg">{currentFileInfo.name}</p>
+                          <p className="text-gray-400 text-sm">{currentFileInfo.size}</p>
+                          <div className="flex items-center gap-2 justify-center">
+                            {currentFileInfo.isNew ? (
+                              <CheckCircle className="w-4 h-4 text-green-400" />
+                            ) : (
+                              <div className="w-4 h-4 bg-blue-400 rounded-full flex items-center justify-center">
+                                <span className="text-xs text-white">📁</span>
+                              </div>
+                            )}
+                            <span className="text-sm text-gray-400">
+                              {currentFileInfo.isNew ? 'New file uploaded' : 'Existing file'}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => removeFile(activeSection)}
+                          className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors flex items-center gap-2"
+                        >
+                          <X className="w-4 h-4" />
+                          Remove
+                        </button>
                       </div>
                     )}
-                    
-                    <div className="space-y-2">
-                      <p className="text-white font-semibold text-lg">{currentFileInfo.name}</p>
-                      <p className="text-gray-400 text-sm">{currentFileInfo.size}</p>
-                      <div className="flex items-center gap-2">
-                        {currentFileInfo.isNew ? (
-                          <CheckCircle className="w-4 h-4 text-green-400" />
-                        ) : (
-                          <div className="w-4 h-4 bg-blue-400 rounded-full flex items-center justify-center">
-                            <span className="text-xs text-white">📁</span>
-                          </div>
-                        )}
-                        <span className="text-sm text-gray-400">
-                          {currentFileInfo.isNew ? 'New file uploaded' : 'Existing file'}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <button
-                      onClick={() => removeFile(activeSection)}
-                      className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors flex items-center gap-2"
-                    >
-                      <X className="w-4 h-4" />
-                      Remove
-                    </button>
                   </div>
                 ) : fileErrors[activeSection] ? (
                   <div className="space-y-4">
@@ -315,20 +372,46 @@ export function UploadFilesStep() {
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    <div className="w-16 h-16 bg-gray-600/20 rounded-full flex items-center justify-center">
-                      <Upload className="w-8 h-8 text-gray-400" />
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-white font-semibold">Drag and drop files here</p>
-                      <p className="text-gray-400 text-sm">-OR-</p>
-                      <button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-semibold"
-                      >
-                        Browse Files
-                      </button>
-                    </div>
+                  <div className="space-y-4 w-full">
+                    {activeSection === 'image' ? (
+                      // Social media-style image upload area
+                      <div className="space-y-4">
+                        <div className="w-24 h-24 mx-auto bg-gray-700/50 rounded-full flex items-center justify-center">
+                          <Image className="w-12 h-12 text-gray-400" />
+                        </div>
+                        <div className="space-y-3">
+                          <p className="text-white font-semibold text-lg">Upload Cover Image</p>
+                          <p className="text-gray-400 text-sm">Drag and drop your image here</p>
+                          <p className="text-gray-500 text-xs">-OR-</p>
+                          <button
+                            onClick={() => fileInputRef.current?.click()}
+                            className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-semibold text-sm"
+                          >
+                            Choose Image
+                          </button>
+                          <p className="text-gray-500 text-xs mt-2">
+                            JPG, PNG, or WebP • Max {APP_CONFIG.FILE_LIMITS.MAX_FILE_SIZE_MB}MB
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      // Standard file upload area
+                      <div className="space-y-4">
+                        <div className="w-16 h-16 bg-gray-600/20 rounded-full flex items-center justify-center">
+                          <Upload className="w-8 h-8 text-gray-400" />
+                        </div>
+                        <div className="space-y-2">
+                          <p className="text-white font-semibold">Drag and drop files here</p>
+                          <p className="text-gray-400 text-sm">-OR-</p>
+                          <button
+                            onClick={() => fileInputRef.current?.click()}
+                            className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-semibold"
+                          >
+                            Browse Files
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
