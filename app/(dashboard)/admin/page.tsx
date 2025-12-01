@@ -90,7 +90,7 @@ export default function AdminDashboard() {
       title: 'Beats',
       description: 'Upload new beats and manage your catalog',
       icon: Music,
-      href: '/admin/upload',
+      href: '/admin/edit-beat',
       color: 'green' as const,
       enabled: true, // Always enabled
     },
