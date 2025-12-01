@@ -10,7 +10,6 @@ import { cn } from '@/lib/utils';
 import { useBeatPacks, useUser } from '@/lib/swr/hooks';
 import Link from 'next/link';
 import { MusicGrid } from '@/components/dashboard/grid/music-grid';
-import { useAudio } from '@/lib/audio';
 
 // Helper to get image URL - uses imageUrl from API response (Supabase signed URL)
 function getImageUrl(item: any): string {
@@ -34,7 +33,6 @@ export default function EditPackListPage() {
   const router = useRouter();
   const { packs, isLoading, refresh } = useBeatPacks();
   const { user: currentUser } = useUser();
-  const { playTrack, currentTrack, playerState, toggleTrack } = useAudio();
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredPacks = packs.filter(pack => 
@@ -43,12 +41,8 @@ export default function EditPackListPage() {
     pack.artist?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handlePlayTrack = (pack: any) => {
-    playTrack({
-      ...pack,
-      isPack: true,
-      packBeats: pack.beats?.length || 0
-    });
+  const handlePlayTrack = () => {
+    // No-op for admin page - audio playback not needed
   };
 
   const handleViewPackDetails = (pack: any) => {
@@ -97,10 +91,10 @@ export default function EditPackListPage() {
         <MusicGrid
           beats={[]}
           packs={filteredPacks}
-          currentTrack={currentTrack}
-          playerState={playerState}
+          currentTrack={undefined}
+          playerState={undefined}
           onPlayTrack={handlePlayTrack}
-          onToggleTrack={toggleTrack}
+          onToggleTrack={handlePlayTrack}
           currentUser={currentUser}
           getImageUrl={getImageUrl}
           onViewPackDetails={handleViewPackDetails}
