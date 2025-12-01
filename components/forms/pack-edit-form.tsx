@@ -175,11 +175,20 @@ export default function PackEditForm({ pack, onCancel, onComplete }: PackEditFor
         selectedBeats: selectedBeats
       };
 
+      // Get Supabase session for auth header
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
       const response = await fetch(`/api/beat-packs/${pack.id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
+        credentials: 'include',
         body: JSON.stringify(updateData),
       });
 
@@ -206,8 +215,18 @@ export default function PackEditForm({ pack, onCancel, onComplete }: PackEditFor
     }
 
     try {
+      // Get Supabase session for auth header
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: HeadersInit = {};
+      
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
       const response = await fetch(`/api/beat-packs/${pack.id}`, {
         method: 'DELETE',
+        headers,
+        credentials: 'include',
       });
 
       if (!response.ok) {
