@@ -87,13 +87,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // For free_asset type, assetId is required
-      if (discountType === 'free_asset' && !assetId) {
-        return NextResponse.json(
-          { error: 'Asset ID is required for free_asset promo codes' },
-          { status: 400 }
-        );
-      }
+      // For free_asset type, assetId is optional (null = unlocks all assets)
 
       // Check if code already exists
       const [existing] = await db

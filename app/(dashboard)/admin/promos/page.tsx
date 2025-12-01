@@ -255,8 +255,25 @@ export default function PromoCodesPage() {
               {formData.discountType === 'free_asset' && (
                 <div className="md:col-span-2">
                   <label className="text-sm font-medium text-gray-300 mb-2 block">
-                    Select {formData.assetType === 'beat' ? 'Beat' : 'Pack'} *
+                    Select {formData.assetType === 'beat' ? 'Beat' : 'Pack'} (leave empty to unlock all assets)
                   </label>
+                  <div className="mb-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData({ ...formData, assetId: '' });
+                        setAssetSearch('');
+                      }}
+                      className={cn(
+                        "text-sm px-3 py-1 rounded-md border transition-colors",
+                        !formData.assetId 
+                          ? "bg-green-500/20 border-green-500 text-green-400"
+                          : "bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700"
+                      )}
+                    >
+                      Unlock All Assets
+                    </button>
+                  </div>
                   <div className="relative">
                     <Search className={cn(getIconSize('sm'), "absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400")} />
                     <Input
