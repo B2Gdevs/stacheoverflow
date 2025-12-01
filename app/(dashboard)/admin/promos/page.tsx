@@ -32,6 +32,7 @@ export default function PromoCodesPage() {
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingPromo, setEditingPromo] = useState<PromoCode | null>(null);
   const [assetSearch, setAssetSearch] = useState('');
   const { addToast } = useToast();
   const { beats = [], isLoading: beatsLoading } = useBeats();
