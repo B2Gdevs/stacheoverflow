@@ -1,11 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUser } from '@/lib/db/queries';
 import { db } from '@/lib/db/drizzle';
-import { beatPacks, beats } from '@/lib/db/schema';
+import { beatPacks, beats, users } from '@/lib/db/schema';
 import { withLogging } from '@/lib/middleware/logging';
-import { eq, inArray } from 'drizzle-orm';
+import { eq, inArray, and, sql, isNull } from 'drizzle-orm';
 import { withCache } from '@/lib/cache/cache-middleware';
 import { cacheInvalidation } from '@/lib/cache/api-cache';
+import { createClient } from '@/utils/supabase/server';
+
+async function getCurrentUser() {
+  // Try Supabase session first (for OAuth users)
+  try {
+    const supabase = await createClient();
+    const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+    
+    if (supabaseUser?.email) {
+      const normalizedEmail = supabaseUser.email.toLowerCase().trim();
+      const [dbUser] = await db
+        .select()
+        .from(users)
+        .where(
+          and(
+            sql`LOWER(${users.email}) = ${normalizedEmail}`,
+            isNull(users.deletedAt)
+          )
+        )
+        .limit(1);
+      
+      if (dbUser) return dbUser;
+    }
+  } catch (error) {
+    console.error('Error getting user from Supabase:', error);
+  }
+  
+  // Fall back to legacy session cookie (for email/password users)
+  return await getUser();
+}
 
 export async function GET(
   request: NextRequest,
@@ -85,7 +115,7 @@ export async function PUT(
 ) {
   return withLogging(request, async (req) => {
     try {
-      const user = await getUser();
+      const user = await getCurrentUser();
       if (!user || user.role !== 'admin') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
@@ -170,7 +200,7 @@ export async function DELETE(
 ) {
   return withLogging(request, async (req) => {
     try {
-      const user = await getUser();
+      const user = await getCurrentUser();
       if (!user || user.role !== 'admin') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
