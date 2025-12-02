@@ -45,15 +45,15 @@ export function UploadFilesStep() {
           preview: previewUrl
         };
       } else if (existingFile) {
+        // existingFile should already be imageUrl (signed URL) from API response
+        // Just use it directly - no need for /api/files/ route
         const fileName = existingFile.split('/').pop() || existingFile;
-        // Use direct API route - it should handle cookie-based auth
-        const imageUrl = existingFile.startsWith('http') ? existingFile : `/api/files/${existingFile}`;
         return {
           name: fileName,
           size: 'Existing file',
           isNew: false,
           file: null,
-          preview: imageUrl
+          preview: existingFile // This is already a signed URL from the API
         };
       } else {
         // Clean up preview URL if no file
