@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUser } from '@/lib/db/queries';
+import { getRealUser } from '@/lib/db/queries';
 import { db } from '@/lib/db/drizzle';
 import { users } from '@/lib/db/schema';
 import { withLogging } from '@/lib/middleware/logging';
@@ -7,7 +7,11 @@ import { eq, and, sql, isNull } from 'drizzle-orm';
 import { createClient } from '@/utils/supabase/server';
 import { cookies } from 'next/headers';
 
-async function getCurrentUser() {
+/**
+ * Get the real authenticated admin user, bypassing impersonation
+ * This is needed for impersonation endpoints to verify the actual admin
+ */
+async function getCurrentAdmin() {
   // Try Supabase session first (for OAuth users)
   try {
     const supabase = await createClient();
@@ -33,7 +37,8 @@ async function getCurrentUser() {
   }
   
   // Fall back to legacy session cookie (for email/password users)
-  return await getUser();
+  // Use getRealUser to bypass impersonation
+  return await getRealUser();
 }
 
 /**
@@ -45,7 +50,7 @@ async function getCurrentUser() {
 export async function POST(request: NextRequest) {
   return withLogging(request, async (req) => {
     try {
-      const admin = await getCurrentUser();
+      const admin = await getCurrentAdmin();
       if (!admin || admin.role !== 'admin') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
@@ -136,7 +141,7 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   return withLogging(request, async (req) => {
     try {
-      const admin = await getCurrentUser();
+      const admin = await getCurrentAdmin();
       if (!admin || admin.role !== 'admin') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
@@ -166,7 +171,7 @@ export async function DELETE(request: NextRequest) {
 export async function GET(request: NextRequest) {
   return withLogging(request, async (req) => {
     try {
-      const admin = await getCurrentUser();
+      const admin = await getCurrentAdmin();
       if (!admin || admin.role !== 'admin') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }

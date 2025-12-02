@@ -5,6 +5,9 @@ import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/auth/session';
 import { getImpersonatedUser } from './impersonation';
 
+/**
+ * Get the current user, respecting impersonation if active
+ */
 export async function getUser() {
   // Check for impersonation first
   const impersonatedUser = await getImpersonatedUser();
@@ -13,6 +16,44 @@ export async function getUser() {
   }
 
   // Normal session check
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get('session');
+  if (!sessionCookie || !sessionCookie.value) {
+    return null;
+  }
+
+  const sessionData = await verifyToken(sessionCookie.value);
+  if (
+    !sessionData ||
+    !sessionData.user ||
+    typeof sessionData.user.id !== 'number'
+  ) {
+    return null;
+  }
+
+  if (new Date(sessionData.expires) < new Date()) {
+    return null;
+  }
+
+  const user = await db
+    .select()
+    .from(users)
+    .where(and(eq(users.id, sessionData.user.id), isNull(users.deletedAt)))
+    .limit(1);
+
+  if (user.length === 0) {
+    return null;
+  }
+
+  return user[0];
+}
+
+/**
+ * Get the real authenticated user, bypassing impersonation
+ * Use this when you need to verify the actual admin (e.g., in impersonation endpoints)
+ */
+export async function getRealUser() {
+  // Skip impersonation check - get the actual authenticated user
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get('session');
   if (!sessionCookie || !sessionCookie.value) {
