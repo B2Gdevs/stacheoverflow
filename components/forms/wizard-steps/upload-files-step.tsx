@@ -331,9 +331,31 @@ export function UploadFilesStep() {
                             src={currentFileInfo.preview}
                             alt="Cover preview"
                             className="w-full h-full object-cover"
-                            onError={(e) => {
-                              // Fallback if image fails to load
+                            crossOrigin="anonymous"
+                            onError={async (e) => {
+                              // If image fails to load, try to fetch signed URL
                               const target = e.target as HTMLImageElement;
+                              const existingFile = beat.existingFiles?.image;
+                              
+                              if (existingFile && !existingFile.startsWith('http') && !currentFileInfo.isNew) {
+                                try {
+                                  const response = await fetch(`/api/files/signed-url?filePath=${encodeURIComponent(existingFile)}`, {
+                                    credentials: 'include',
+                                  });
+                                  
+                                  if (response.ok) {
+                                    const data = await response.json();
+                                    if (data.signedUrl) {
+                                      target.src = data.signedUrl;
+                                      return; // Successfully updated src
+                                    }
+                                  }
+                                } catch (error) {
+                                  console.error('Error fetching signed URL on image error:', error);
+                                }
+                              }
+                              
+                              // If all else fails, hide the image
                               target.style.display = 'none';
                             }}
                           />
