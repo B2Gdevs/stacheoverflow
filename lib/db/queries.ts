@@ -13,6 +13,7 @@ export async function getUser() {
   }
 
   // Normal session check
+  const cookieStore = await cookies();
   const sessionCookie = cookieStore.get('session');
   if (!sessionCookie || !sessionCookie.value) {
     return null;

@@ -46,14 +46,21 @@ export function UploadFilesStep() {
         };
       } else if (existingFile) {
         // existingFile should already be imageUrl (signed URL) from API response
-        // Just use it directly - no need for /api/files/ route
-        const fileName = existingFile.split('/').pop() || existingFile;
+        // If it's a full URL (starts with http), use it directly
+        // Otherwise it might be a file path, which we shouldn't use
+        const fileName = existingFile.includes('/') 
+          ? existingFile.split('/').pop() || existingFile
+          : existingFile;
+        
+        // Only use if it's a full URL (signed URL from Supabase)
+        const preview = existingFile.startsWith('http') ? existingFile : null;
+        
         return {
           name: fileName,
           size: 'Existing file',
           isNew: false,
           file: null,
-          preview: existingFile // This is already a signed URL from the API
+          preview: preview // Only set if it's a valid URL
         };
       } else {
         // Clean up preview URL if no file
@@ -434,7 +441,7 @@ export function UploadFilesStep() {
                 <div
                   key={section}
                   onClick={() => setActiveSection(section)}
-                  className={`p-3 sm:p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 min-h-[80px] sm:min-h-0 ${
+                  className={`p-2.5 sm:p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
                     isActive
                       ? 'border-green-400 bg-green-400/10'
                       : hasError
@@ -444,8 +451,8 @@ export function UploadFilesStep() {
                       : 'border-gray-600 bg-gray-800/50 hover:border-gray-500'
                   }`}
                 >
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                  <div className="flex items-start gap-2 sm:gap-3">
+                    <div className={`w-7 h-7 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${
                       isActive
                         ? 'bg-green-400 text-white'
                         : hasError
@@ -458,26 +465,28 @@ export function UploadFilesStep() {
                     </div>
                     
                     <div className="flex-1 min-w-0 overflow-hidden">
-                      <div className="flex items-center gap-1 sm:gap-2 min-w-0">
-                        <h5 className="text-white font-semibold text-xs sm:text-sm truncate flex-1 min-w-0">{getSectionTitle(section)}</h5>
-                        {fileInfo && (
-                          <div className="flex items-center gap-1 flex-shrink-0">
-                            {fileInfo.isNew ? (
+                      <div className="flex items-start gap-1 sm:gap-2 min-w-0">
+                        <div className="flex-1 min-w-0">
+                          <h5 className="text-white font-semibold text-[11px] sm:text-sm truncate leading-tight">{getSectionTitle(section)}</h5>
+                          <p className="text-gray-400 text-[9px] sm:text-xs mt-0.5 line-clamp-1 leading-tight">{getSectionDescription(section)}</p>
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0 mt-0.5">
+                          {fileInfo && (
+                            fileInfo.isNew ? (
                               <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
                             ) : (
                               <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-400 rounded-full flex items-center justify-center">
-                                <span className="text-[8px] sm:text-xs text-white">📁</span>
+                                <span className="text-[7px] sm:text-xs text-white">📁</span>
                               </div>
-                            )}
-                          </div>
-                        )}
-                        {hasError && <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 text-red-400 flex-shrink-0" />}
+                            )
+                          )}
+                          {hasError && <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />}
+                        </div>
                       </div>
-                      <p className="text-gray-400 text-[10px] sm:text-xs mt-0.5 line-clamp-1">{getSectionDescription(section)}</p>
                       {fileInfo && (
-                        <div className="mt-1 space-y-0.5">
-                          <p className="text-white text-[10px] sm:text-xs font-medium truncate" title={fileInfo.name}>{fileInfo.name}</p>
-                          <p className="text-gray-400 text-[10px] sm:text-xs truncate">{fileInfo.size}</p>
+                        <div className="mt-1.5 space-y-0.5">
+                          <p className="text-white text-[9px] sm:text-xs font-medium truncate leading-tight" title={fileInfo.name}>{fileInfo.name}</p>
+                          <p className="text-gray-400 text-[9px] sm:text-xs truncate leading-tight">{fileInfo.size}</p>
                         </div>
                       )}
                     </div>
