@@ -14,7 +14,6 @@ export function UploadFilesStep() {
   const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
-  const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
 
   // Cleanup object URLs on unmount or when image changes
   useEffect(() => {
@@ -24,47 +23,6 @@ export function UploadFilesStep() {
       }
     };
   }, [imagePreviewUrl]);
-
-  // Fetch signed URL for existing images immediately when component loads or image changes
-  useEffect(() => {
-    const fetchSignedUrl = async () => {
-      const existingFile = beat.existingFiles?.image;
-      if (!existingFile) {
-        setExistingImageUrl(null);
-        return;
-      }
-
-      // If it's already a full HTTP URL, use it directly
-      if (existingFile.startsWith('http')) {
-        setExistingImageUrl(existingFile);
-        return;
-      }
-
-      // Fetch signed URL for the existing image
-      try {
-        const response = await fetch(`/api/files/signed-url?filePath=${encodeURIComponent(existingFile)}`, {
-          credentials: 'include', // Include cookies for auth
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          if (data.signedUrl) {
-            setExistingImageUrl(data.signedUrl);
-            return;
-          }
-        }
-        
-        // If signed URL fails, try direct API route (will use cookies)
-        setExistingImageUrl(`/api/files/${existingFile}`);
-      } catch (error) {
-        console.error('Error fetching signed URL:', error);
-        // Fallback to direct API route
-        setExistingImageUrl(`/api/files/${existingFile}`);
-      }
-    };
-
-    fetchSignedUrl();
-  }, [beat.existingFiles?.image]);
 
 
   const getFileInfo = (type: 'mp3' | 'wav' | 'stems' | 'image') => {
@@ -88,8 +46,8 @@ export function UploadFilesStep() {
         };
       } else if (existingFile) {
         const fileName = existingFile.split('/').pop() || existingFile;
-        // Use the signed URL from state if available, otherwise fallback
-        const imageUrl = existingImageUrl || (existingFile.startsWith('http') ? existingFile : `/api/files/${existingFile}`);
+        // Use direct API route - it should handle cookie-based auth
+        const imageUrl = existingFile.startsWith('http') ? existingFile : `/api/files/${existingFile}`;
         return {
           name: fileName,
           size: 'Existing file',
@@ -331,33 +289,6 @@ export function UploadFilesStep() {
                             src={currentFileInfo.preview}
                             alt="Cover preview"
                             className="w-full h-full object-cover"
-                            crossOrigin="anonymous"
-                            onError={async (e) => {
-                              // If image fails to load, try to fetch signed URL
-                              const target = e.target as HTMLImageElement;
-                              const existingFile = beat.existingFiles?.image;
-                              
-                              if (existingFile && !existingFile.startsWith('http') && !currentFileInfo.isNew) {
-                                try {
-                                  const response = await fetch(`/api/files/signed-url?filePath=${encodeURIComponent(existingFile)}`, {
-                                    credentials: 'include',
-                                  });
-                                  
-                                  if (response.ok) {
-                                    const data = await response.json();
-                                    if (data.signedUrl) {
-                                      target.src = data.signedUrl;
-                                      return; // Successfully updated src
-                                    }
-                                  }
-                                } catch (error) {
-                                  console.error('Error fetching signed URL on image error:', error);
-                                }
-                              }
-                              
-                              // If all else fails, hide the image
-                              target.style.display = 'none';
-                            }}
                           />
                           {/* Overlay with file info */}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-4">
