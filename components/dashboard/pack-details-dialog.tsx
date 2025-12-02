@@ -98,9 +98,9 @@ export function PackDetailsDialog({
           {/* Pack Image and Basic Info */}
           <div className="flex flex-col sm:flex-row gap-6">
             <div className="flex-shrink-0">
-              {pack.imageFile ? (
+              {getImageUrl(pack) ? (
                 <img
-                  src={getImageUrl(pack) || ''}
+                  src={getImageUrl(pack)}
                   alt={pack.title}
                   className="w-full sm:w-48 h-48 object-cover rounded-lg border-2 border-gray-700"
                 />
