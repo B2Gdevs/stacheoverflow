@@ -40,6 +40,18 @@ export function ImpersonationToolbar() {
       const response = await fetch('/api/admin/impersonate', {
         credentials: 'include',
       });
+      
+      if (!response.ok) {
+        // If 404 or other error, set status to not impersonating
+        if (response.status === 404) {
+          console.warn('Impersonation API endpoint not found - this is normal if route is not set up');
+          setStatus({ isImpersonating: false });
+          setLoading(false);
+          return;
+        }
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
       const data = await response.json();
       setStatus(data);
       // Auto-expand if impersonating
@@ -48,6 +60,8 @@ export function ImpersonationToolbar() {
       }
     } catch (error) {
       console.error('Error checking impersonation status:', error);
+      // Set default status on error
+      setStatus({ isImpersonating: false });
     } finally {
       setLoading(false);
     }
