@@ -29,9 +29,9 @@ interface WizardHeaderProps {
 
 export function WizardHeader({ title, description, className = '' }: WizardHeaderProps) {
   return (
-    <div className={`mb-6 ${className}`}>
-      <h1 className="text-2xl font-bold text-white mb-2">{title}</h1>
-      <p className="text-gray-400 text-sm">{description}</p>
+    <div className={`mb-4 sm:mb-6 ${className}`}>
+      <h1 className="text-xl sm:text-2xl font-bold text-white mb-1 sm:mb-2">{title}</h1>
+      <p className="text-gray-400 text-xs sm:text-sm">{description}</p>
     </div>
   );
 }

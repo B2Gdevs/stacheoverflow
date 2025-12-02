@@ -457,9 +457,9 @@ export function UploadFilesStep() {
                       {getSectionIcon(section)}
                     </div>
                     
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1 sm:gap-2">
-                        <h5 className="text-white font-semibold text-xs sm:text-sm truncate">{getSectionTitle(section)}</h5>
+                    <div className="flex-1 min-w-0 overflow-hidden">
+                      <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+                        <h5 className="text-white font-semibold text-xs sm:text-sm truncate flex-1 min-w-0">{getSectionTitle(section)}</h5>
                         {fileInfo && (
                           <div className="flex items-center gap-1 flex-shrink-0">
                             {fileInfo.isNew ? (
@@ -473,11 +473,11 @@ export function UploadFilesStep() {
                         )}
                         {hasError && <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 text-red-400 flex-shrink-0" />}
                       </div>
-                      <p className="text-gray-400 text-[10px] sm:text-xs mt-0.5">{getSectionDescription(section)}</p>
+                      <p className="text-gray-400 text-[10px] sm:text-xs mt-0.5 line-clamp-1">{getSectionDescription(section)}</p>
                       {fileInfo && (
                         <div className="mt-1 space-y-0.5">
-                          <p className="text-white text-[10px] sm:text-xs font-medium truncate">{fileInfo.name}</p>
-                          <p className="text-gray-400 text-[10px] sm:text-xs">{fileInfo.size}</p>
+                          <p className="text-white text-[10px] sm:text-xs font-medium truncate" title={fileInfo.name}>{fileInfo.name}</p>
+                          <p className="text-gray-400 text-[10px] sm:text-xs truncate">{fileInfo.size}</p>
                         </div>
                       )}
                     </div>
