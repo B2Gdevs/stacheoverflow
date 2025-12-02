@@ -68,10 +68,11 @@ export default function ImpersonatePage() {
         const data = await response.json();
         setUsers(data.users || []);
       } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
         addToast({
           type: 'error',
           title: 'Error',
-          description: 'Failed to search users',
+          description: errorData.error || 'Failed to search users',
         });
       }
     } catch (error) {

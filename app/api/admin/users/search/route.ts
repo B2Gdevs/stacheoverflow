@@ -1,44 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUser } from '@/lib/db/queries';
+import { getRealUser } from '@/lib/db/queries';
 import { db } from '@/lib/db/drizzle';
 import { users } from '@/lib/db/schema';
 import { withLogging } from '@/lib/middleware/logging';
-import { eq, and, sql, isNull, or, ilike } from 'drizzle-orm';
-import { createClient } from '@/utils/supabase/server';
-
-async function getCurrentUser() {
-  // Try Supabase session first (for OAuth users)
-  try {
-    const supabase = await createClient();
-    const { data: { user: supabaseUser } } = await supabase.auth.getUser();
-    
-    if (supabaseUser?.email) {
-      const normalizedEmail = supabaseUser.email.toLowerCase().trim();
-      const [dbUser] = await db
-        .select()
-        .from(users)
-        .where(
-          and(
-            sql`LOWER(${users.email}) = ${normalizedEmail}`,
-            isNull(users.deletedAt)
-          )
-        )
-        .limit(1);
-      
-      if (dbUser) return dbUser;
-    }
-  } catch (error) {
-    console.error('Error getting user from Supabase:', error);
-  }
-  
-  // Fall back to legacy session cookie (for email/password users)
-  return await getUser();
-}
+import { and, sql, isNull, or, ilike } from 'drizzle-orm';
 
 export async function GET(request: NextRequest) {
   return withLogging(request, async (req) => {
     try {
-      const user = await getCurrentUser();
+      // Use getRealUser to bypass impersonation - we need the actual admin
+      const user = await getRealUser();
       if (!user || user.role !== 'admin') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
@@ -50,9 +21,11 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ users: [] });
       }
 
-      const searchTerm = `%${query.trim()}%`;
+      const searchTerm = query.trim().toLowerCase();
+      const searchPattern = `%${searchTerm}%`;
 
       // Search by email or name (case-insensitive)
+      // Use ilike for case-insensitive search, or handle null names
       const results = await db
         .select({
           id: users.id,
@@ -66,8 +39,8 @@ export async function GET(request: NextRequest) {
           and(
             isNull(users.deletedAt),
             or(
-              sql`LOWER(${users.email}) LIKE LOWER(${searchTerm})`,
-              sql`LOWER(${users.name}) LIKE LOWER(${searchTerm})`
+              sql`LOWER(${users.email}) LIKE ${searchPattern}`,
+              sql`LOWER(COALESCE(${users.name}, '')) LIKE ${searchPattern}`
             )
           )
         )
