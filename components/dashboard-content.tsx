@@ -245,7 +245,7 @@ export function DashboardContent() {
                 <div className="relative aspect-square overflow-hidden rounded-t-lg bg-gray-900">
                   {beat.imageFile ? (
                     <img 
-                      src={getImageUrl(beat) || '/placeholder-image.png'} 
+                      src={getImageUrl(beat) || ''} 
                       alt={beat.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"
@@ -352,7 +352,7 @@ export function DashboardContent() {
                 <div className="relative aspect-square overflow-hidden rounded-t-lg bg-gray-900">
                   {pack.imageFile ? (
                     <img 
-                      src={getImageUrl(pack) || '/placeholder-image.png'} 
+                      src={getImageUrl(pack) || ''} 
                       alt={pack.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"

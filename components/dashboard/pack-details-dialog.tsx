@@ -100,7 +100,7 @@ export function PackDetailsDialog({
             <div className="flex-shrink-0">
               {pack.imageFile ? (
                 <img
-                  src={getImageUrl(pack) || '/placeholder-image.png'}
+                  src={getImageUrl(pack) || ''}
                   alt={pack.title}
                   className="w-full sm:w-48 h-48 object-cover rounded-lg border-2 border-gray-700"
                 />

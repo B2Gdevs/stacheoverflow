@@ -145,11 +145,8 @@ export async function DELETE(request: NextRequest) {
 export async function GET(request: NextRequest) {
   return withLogging(request, async (req) => {
     try {
-      const admin = await getCurrentAdmin();
-      if (!admin || admin.role !== 'admin') {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-
+      // Allow checking impersonation status without admin check
+      // This is needed for the banner to work
       const cookieStore = await cookies();
       const impersonationCookie = cookieStore.get('impersonation');
 
