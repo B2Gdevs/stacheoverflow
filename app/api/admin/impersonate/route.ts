@@ -12,32 +12,6 @@ import { cookies } from 'next/headers';
  * This is needed for impersonation endpoints to verify the actual admin
  */
 async function getCurrentAdmin() {
-  // Try Supabase session first (for OAuth users)
-  try {
-    const supabase = await createClient();
-    const { data: { user: supabaseUser } } = await supabase.auth.getUser();
-    
-    if (supabaseUser?.email) {
-      const normalizedEmail = supabaseUser.email.toLowerCase().trim();
-      const [dbUser] = await db
-        .select()
-        .from(users)
-        .where(
-          and(
-            sql`LOWER(${users.email}) = ${normalizedEmail}`,
-            isNull(users.deletedAt)
-          )
-        )
-        .limit(1);
-      
-      if (dbUser) return dbUser;
-    }
-  } catch (error) {
-    console.error('Error getting user from Supabase:', error);
-  }
-  
-  // Fall back to legacy session cookie (for email/password users)
-  // Use getRealUser to bypass impersonation
   return await getRealUser();
 }
 
