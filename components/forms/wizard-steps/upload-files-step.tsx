@@ -297,6 +297,11 @@ export function UploadFilesStep() {
                             src={currentFileInfo.preview}
                             alt="Cover preview"
                             className="w-full h-full object-cover"
+                            onError={(e) => {
+                              // If image fails to load, hide it
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                            }}
                           />
                           {/* Overlay with file info */}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-3 sm:p-4">
