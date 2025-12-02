@@ -54,21 +54,41 @@ export default function ImpersonatePage() {
   };
 
   const searchUsers = async () => {
-    if (!searchTerm.trim()) {
+    const trimmedTerm = searchTerm.trim();
+    console.log('🔍 Frontend: searchUsers called with term:', trimmedTerm);
+    
+    if (!trimmedTerm) {
+      console.log('🔍 Frontend: Empty search term, clearing results');
+      setUsers([]);
+      return;
+    }
+
+    if (trimmedTerm.length < 2) {
+      console.log('🔍 Frontend: Search term too short, need at least 2 characters');
       setUsers([]);
       return;
     }
 
     setSearching(true);
+    const searchUrl = `/api/admin/users/search?q=${encodeURIComponent(trimmedTerm)}`;
+    console.log('🔍 Frontend: Fetching from URL:', searchUrl);
+    
     try {
-      const response = await fetch(`/api/admin/users/search?q=${encodeURIComponent(searchTerm)}`, {
+      const response = await fetch(searchUrl, {
         credentials: 'include',
       });
+      
+      console.log('🔍 Frontend: Response status:', response.status);
+      console.log('🔍 Frontend: Response ok:', response.ok);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('🔍 Frontend: Response data:', data);
+        console.log('🔍 Frontend: Users found:', data.users?.length || 0);
         setUsers(data.users || []);
       } else {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('🔍 Frontend: Error response:', errorData);
         addToast({
           type: 'error',
           title: 'Error',
@@ -76,7 +96,11 @@ export default function ImpersonatePage() {
         });
       }
     } catch (error) {
-      console.error('Error searching users:', error);
+      console.error('🔍 Frontend: Error searching users:', error);
+      if (error instanceof Error) {
+        console.error('🔍 Frontend: Error message:', error.message);
+        console.error('🔍 Frontend: Error stack:', error.stack);
+      }
       addToast({
         type: 'error',
         title: 'Error',
@@ -299,9 +323,22 @@ export default function ImpersonatePage() {
                   type="text"
                   placeholder="Search by email or name..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setSearchTerm(value);
+                    // Auto-search as user types (debounced)
+                    if (value.trim().length >= 2) {
+                      const timeoutId = setTimeout(() => {
+                        searchUsers();
+                      }, 500);
+                      return () => clearTimeout(timeoutId);
+                    } else {
+                      setUsers([]);
+                    }
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
+                      e.preventDefault();
                       searchUsers();
                     }
                   }}
@@ -309,7 +346,11 @@ export default function ImpersonatePage() {
                 />
               </div>
               <Button
-                onClick={searchUsers}
+                onClick={(e) => {
+                  e.preventDefault();
+                  console.log('🔍 Frontend: Search button clicked, term:', searchTerm);
+                  searchUsers();
+                }}
                 disabled={searching || !searchTerm.trim()}
                 className="bg-green-500 hover:bg-green-600 text-white min-h-[44px] sm:min-h-0"
               >
