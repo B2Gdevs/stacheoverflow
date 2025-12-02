@@ -8,6 +8,7 @@ import { APP_CONFIG, FileSizeUtils } from '@/lib/constants';
 import { syncTagsForBeat } from '@/lib/db/tag-queries';
 import { withCache } from '@/lib/cache/cache-middleware';
 import { cacheInvalidation } from '@/lib/cache/api-cache';
+import { STORAGE_BUCKETS } from '@/lib/supabase';
 
 export async function GET(
   request: NextRequest,
@@ -34,6 +35,38 @@ export async function GET(
 
       const beatData = beat[0];
 
+      // Generate signed URL for image if it exists (same as list route)
+      let imageUrl = null;
+      if (beatData.imageFile && beatData.imageFile.includes('/')) {
+        try {
+          const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
+          const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+          
+          if (serviceKey) {
+            const supabaseAdmin = createSupabaseClient(
+              process.env.NEXT_PUBLIC_SUPABASE_URL!,
+              serviceKey,
+              { auth: { autoRefreshToken: false, persistSession: false } }
+            );
+            
+            const [bucket, ...fileParts] = beatData.imageFile.split('/');
+            const fileName = fileParts.join('/');
+            
+            if (bucket === STORAGE_BUCKETS.IMAGES && fileName) {
+              const { data, error } = await supabaseAdmin.storage
+                .from(bucket)
+                .createSignedUrl(fileName, 3600); // 1 hour
+              
+              if (!error && data) {
+                imageUrl = data.signedUrl;
+              }
+            }
+          }
+        } catch (error) {
+          // Continue without signed URL if generation fails
+        }
+      }
+
       // Transform the data to match the expected format
       const response = {
         id: beatData.id,
@@ -56,6 +89,7 @@ export async function GET(
           stems: beatData.audioFileStems,
         },
         imageFile: beatData.imageFile,
+        imageUrl, // Include signed URL
         createdAt: beatData.createdAt,
       };
 

@@ -225,11 +225,12 @@ export function BeatWizard({ mode, initialBeat, onCancel, onComplete }: BeatWiza
         imageFile: null, // Files can't be pre-populated
         published: beat.published || false,
         // Store existing file references
+        // Use imageUrl (signed URL) if available, otherwise fallback to imageFile path
         existingFiles: {
           mp3: beat.audioFiles?.mp3 || null,
           wav: beat.audioFiles?.wav || null,
           stems: beat.audioFiles?.stems || null,
-          image: beat.imageFile || null
+          image: beat.imageUrl || beat.imageFile || null
         }
       },
       pack: {
