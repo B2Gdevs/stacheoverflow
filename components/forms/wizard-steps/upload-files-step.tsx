@@ -88,14 +88,15 @@ export function UploadFilesStep() {
   };
 
   const getSectionIcon = (type: 'mp3' | 'wav' | 'stems' | 'image') => {
+    const iconSize = 'w-4 h-4 sm:w-5 sm:h-5';
     switch (type) {
       case 'mp3':
       case 'wav':
-        return <Music className="w-5 h-5" />;
+        return <Music className={iconSize} />;
       case 'stems':
-        return <Archive className="w-5 h-5" />;
+        return <Archive className={iconSize} />;
       case 'image':
-        return <Image className="w-5 h-5" />;
+        return <Image className={iconSize} />;
     }
   };
 
