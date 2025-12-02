@@ -242,21 +242,21 @@ export function UploadFilesStep() {
   const sections: Array<'mp3' | 'wav' | 'stems' | 'image'> = ['mp3', 'wav', 'stems', 'image'];
 
   return (
-    <div className="space-y-6">
-      <div className="flex gap-6 h-96">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
         {/* Left Side - Upload Area */}
-        <div className="flex-1">
-          <div className="h-full">
-            <h4 className="text-white font-bold mb-4 text-lg">Upload Files</h4>
-            <p className="text-gray-400 text-sm mb-6">Upload your {getSectionTitle(activeSection).toLowerCase()}</p>
+        <div className="flex-1 min-w-0">
+          <div>
+            <h4 className="text-white font-bold mb-2 sm:mb-4 text-base sm:text-lg">Upload Files</h4>
+            <p className="text-gray-400 text-xs sm:text-sm mb-4 sm:mb-6">Upload your {getSectionTitle(activeSection).toLowerCase()}</p>
             
             {/* Drag and Drop Area */}
             <div
               className={`relative ${
                 activeSection === 'image' && currentFileInfo?.preview
-                  ? 'h-auto min-h-[400px]'
-                  : 'h-64'
-              } border-2 border-dashed rounded-xl transition-all duration-200 ${
+                  ? 'h-auto min-h-[280px] sm:min-h-[400px]'
+                  : 'min-h-[200px] sm:min-h-[256px]'
+              } border-2 border-dashed rounded-lg sm:rounded-xl transition-all duration-200 ${
                 dragActive
                   ? 'border-green-400 bg-green-400/10'
                   : fileErrors[activeSection]
@@ -278,30 +278,30 @@ export function UploadFilesStep() {
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
               
-              <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+              <div className="flex flex-col items-center justify-center min-h-full p-4 sm:p-6 text-center">
                 {currentFileInfo ? (
-                  <div className="space-y-4 w-full">
+                  <div className="space-y-3 sm:space-y-4 w-full">
                     {activeSection === 'image' && currentFileInfo.preview ? (
                       // Social media-style large image preview
                       <div className="relative w-full max-w-md mx-auto">
-                        <div className="relative aspect-square rounded-xl overflow-hidden border-2 border-gray-600 bg-gray-900">
+                        <div className="relative aspect-square rounded-lg sm:rounded-xl overflow-hidden border-2 border-gray-600 bg-gray-900">
                           <img
                             src={currentFileInfo.preview}
                             alt="Cover preview"
                             className="w-full h-full object-cover"
                           />
                           {/* Overlay with file info */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-4">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-3 sm:p-4">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
                                 {currentFileInfo.isNew ? (
-                                  <CheckCircle className="w-5 h-5 text-green-400" />
+                                  <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 flex-shrink-0" />
                                 ) : (
-                                  <div className="w-5 h-5 bg-blue-400 rounded-full flex items-center justify-center">
-                                    <span className="text-xs text-white">📁</span>
+                                  <div className="w-4 h-4 sm:w-5 sm:h-5 bg-blue-400 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <span className="text-[10px] sm:text-xs text-white">📁</span>
                                   </div>
                                 )}
-                                <span className="text-white text-sm font-medium">
+                                <span className="text-white text-xs sm:text-sm font-medium truncate">
                                   {currentFileInfo.isNew ? 'New upload' : 'Existing file'}
                                 </span>
                               </div>
@@ -310,101 +310,101 @@ export function UploadFilesStep() {
                                   e.stopPropagation();
                                   removeFile(activeSection);
                                 }}
-                                className="px-3 py-1.5 bg-red-500/90 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
+                                className="px-2 sm:px-3 py-1 sm:py-1.5 bg-red-500/90 hover:bg-red-600 text-white rounded-md sm:rounded-lg transition-colors flex items-center gap-1 sm:gap-2 text-xs sm:text-sm font-medium flex-shrink-0 min-h-[32px] sm:min-h-0"
                               >
-                                <X className="w-4 h-4" />
-                                Remove
+                                <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                                <span className="hidden sm:inline">Remove</span>
                               </button>
                             </div>
-                            <p className="text-white text-xs mt-1 truncate">{currentFileInfo.name}</p>
-                            <p className="text-gray-300 text-xs">{currentFileInfo.size}</p>
+                            <p className="text-white text-[10px] sm:text-xs mt-1 truncate">{currentFileInfo.name}</p>
+                            <p className="text-gray-300 text-[10px] sm:text-xs">{currentFileInfo.size}</p>
                           </div>
                         </div>
                         {/* Click to change button */}
                         <button
                           onClick={() => fileInputRef.current?.click()}
-                          className="mt-3 w-full px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors font-semibold text-sm"
+                          className="mt-2 sm:mt-3 w-full px-3 sm:px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md sm:rounded-lg transition-colors font-semibold text-xs sm:text-sm min-h-[40px] sm:min-h-0"
                         >
                           Change Image
                         </button>
                       </div>
                     ) : (
                       // Non-image file display
-                      <div className="space-y-4">
-                        <div className="w-16 h-16 bg-green-400/20 rounded-full flex items-center justify-center">
+                      <div className="space-y-3 sm:space-y-4">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-400/20 rounded-full flex items-center justify-center mx-auto">
                           {getSectionIcon(activeSection)}
                         </div>
-                        <div className="space-y-2">
-                          <p className="text-white font-semibold text-lg">{currentFileInfo.name}</p>
-                          <p className="text-gray-400 text-sm">{currentFileInfo.size}</p>
+                        <div className="space-y-1 sm:space-y-2">
+                          <p className="text-white font-semibold text-sm sm:text-lg truncate px-2">{currentFileInfo.name}</p>
+                          <p className="text-gray-400 text-xs sm:text-sm">{currentFileInfo.size}</p>
                           <div className="flex items-center gap-2 justify-center">
                             {currentFileInfo.isNew ? (
-                              <CheckCircle className="w-4 h-4 text-green-400" />
+                              <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
                             ) : (
-                              <div className="w-4 h-4 bg-blue-400 rounded-full flex items-center justify-center">
-                                <span className="text-xs text-white">📁</span>
+                              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-400 rounded-full flex items-center justify-center">
+                                <span className="text-[8px] sm:text-xs text-white">📁</span>
                               </div>
                             )}
-                            <span className="text-sm text-gray-400">
+                            <span className="text-xs sm:text-sm text-gray-400">
                               {currentFileInfo.isNew ? 'New file uploaded' : 'Existing file'}
                             </span>
                           </div>
                         </div>
                         <button
                           onClick={() => removeFile(activeSection)}
-                          className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors flex items-center gap-2"
+                          className="px-3 sm:px-4 py-1.5 sm:py-2 bg-red-500/20 text-red-400 rounded-md sm:rounded-lg hover:bg-red-500/30 transition-colors flex items-center gap-1.5 sm:gap-2 mx-auto text-xs sm:text-sm min-h-[36px] sm:min-h-0"
                         >
-                          <X className="w-4 h-4" />
+                          <X className="w-3 h-3 sm:w-4 sm:h-4" />
                           Remove
                         </button>
                       </div>
                     )}
                   </div>
                 ) : fileErrors[activeSection] ? (
-                  <div className="space-y-4">
-                    <div className="w-16 h-16 bg-red-400/20 rounded-full flex items-center justify-center">
-                      <AlertCircle className="w-8 h-8 text-red-400" />
+                  <div className="space-y-3 sm:space-y-4">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-red-400/20 rounded-full flex items-center justify-center mx-auto">
+                      <AlertCircle className="w-6 h-6 sm:w-8 sm:h-8 text-red-400" />
                     </div>
-                    <div className="space-y-2">
-                      <p className="text-red-400 font-semibold">Upload Error</p>
-                      <p className="text-red-300 text-sm max-w-xs">{fileErrors[activeSection]}</p>
+                    <div className="space-y-1 sm:space-y-2 px-2">
+                      <p className="text-red-400 font-semibold text-sm sm:text-base">Upload Error</p>
+                      <p className="text-red-300 text-xs sm:text-sm max-w-xs mx-auto">{fileErrors[activeSection]}</p>
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-4 w-full">
+                  <div className="space-y-3 sm:space-y-4 w-full px-2">
                     {activeSection === 'image' ? (
                       // Social media-style image upload area
-                      <div className="space-y-4">
-                        <div className="w-24 h-24 mx-auto bg-gray-700/50 rounded-full flex items-center justify-center">
-                          <Image className="w-12 h-12 text-gray-400" />
+                      <div className="space-y-3 sm:space-y-4">
+                        <div className="w-16 h-16 sm:w-24 sm:h-24 mx-auto bg-gray-700/50 rounded-full flex items-center justify-center">
+                          <Image className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400" />
                         </div>
-                        <div className="space-y-3">
-                          <p className="text-white font-semibold text-lg">Upload Cover Image</p>
-                          <p className="text-gray-400 text-sm">Drag and drop your image here</p>
-                          <p className="text-gray-500 text-xs">-OR-</p>
+                        <div className="space-y-2 sm:space-y-3">
+                          <p className="text-white font-semibold text-sm sm:text-lg">Upload Cover Image</p>
+                          <p className="text-gray-400 text-xs sm:text-sm">Drag and drop your image here</p>
+                          <p className="text-gray-500 text-[10px] sm:text-xs">-OR-</p>
                           <button
                             onClick={() => fileInputRef.current?.click()}
-                            className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-semibold text-sm"
+                            className="px-4 sm:px-6 py-2 sm:py-3 bg-green-500 text-white rounded-md sm:rounded-lg hover:bg-green-600 transition-colors font-semibold text-xs sm:text-sm min-h-[40px] sm:min-h-0"
                           >
                             Choose Image
                           </button>
-                          <p className="text-gray-500 text-xs mt-2">
+                          <p className="text-gray-500 text-[10px] sm:text-xs mt-1 sm:mt-2">
                             JPG, PNG, or WebP • Max {APP_CONFIG.FILE_LIMITS.MAX_FILE_SIZE_MB}MB
                           </p>
                         </div>
                       </div>
                     ) : (
                       // Standard file upload area
-                      <div className="space-y-4">
-                        <div className="w-16 h-16 bg-gray-600/20 rounded-full flex items-center justify-center">
-                          <Upload className="w-8 h-8 text-gray-400" />
+                      <div className="space-y-3 sm:space-y-4">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-600/20 rounded-full flex items-center justify-center mx-auto">
+                          <Upload className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
                         </div>
-                        <div className="space-y-2">
-                          <p className="text-white font-semibold">Drag and drop files here</p>
-                          <p className="text-gray-400 text-sm">-OR-</p>
+                        <div className="space-y-1 sm:space-y-2">
+                          <p className="text-white font-semibold text-sm sm:text-base">Drag and drop files here</p>
+                          <p className="text-gray-400 text-xs sm:text-sm">-OR-</p>
                           <button
                             onClick={() => fileInputRef.current?.click()}
-                            className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-semibold"
+                            className="px-4 sm:px-6 py-2 bg-green-500 text-white rounded-md sm:rounded-lg hover:bg-green-600 transition-colors font-semibold text-xs sm:text-sm min-h-[40px] sm:min-h-0"
                           >
                             Browse Files
                           </button>
@@ -419,94 +419,96 @@ export function UploadFilesStep() {
         </div>
 
         {/* Right Side - File Sections */}
-        <div className="w-80 space-y-3">
-          <h4 className="text-white font-bold text-lg">File Sections</h4>
-          <p className="text-gray-400 text-sm mb-4">Select a section to upload files</p>
+        <div className="w-full lg:w-80 space-y-2 sm:space-y-3">
+          <h4 className="text-white font-bold text-base sm:text-lg">File Sections</h4>
+          <p className="text-gray-400 text-xs sm:text-sm mb-3 sm:mb-4">Select a section to upload files</p>
           
-          {sections.map((section) => {
-            const fileInfo = getFileInfo(section);
-            const isActive = activeSection === section;
-            const hasError = !!fileErrors[section];
-            
-            return (
-              <div
-                key={section}
-                onClick={() => setActiveSection(section)}
-                className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                  isActive
-                    ? 'border-green-400 bg-green-400/10'
-                    : hasError
-                    ? 'border-red-400 bg-red-400/5 hover:border-red-300'
-                    : fileInfo
-                    ? 'border-green-400/50 bg-green-400/5 hover:border-green-400'
-                    : 'border-gray-600 bg-gray-800/50 hover:border-gray-500'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+          <div className="grid grid-cols-2 lg:grid-cols-1 gap-2 sm:gap-3">
+            {sections.map((section) => {
+              const fileInfo = getFileInfo(section);
+              const isActive = activeSection === section;
+              const hasError = !!fileErrors[section];
+              
+              return (
+                <div
+                  key={section}
+                  onClick={() => setActiveSection(section)}
+                  className={`p-3 sm:p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 min-h-[80px] sm:min-h-0 ${
                     isActive
-                      ? 'bg-green-400 text-white'
+                      ? 'border-green-400 bg-green-400/10'
                       : hasError
-                      ? 'bg-red-400/20 text-red-400'
+                      ? 'border-red-400 bg-red-400/5 hover:border-red-300'
                       : fileInfo
-                      ? 'bg-green-400/20 text-green-400'
-                      : 'bg-gray-600/20 text-gray-400'
-                  }`}>
-                    {getSectionIcon(section)}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h5 className="text-white font-semibold text-sm">{getSectionTitle(section)}</h5>
+                      ? 'border-green-400/50 bg-green-400/5 hover:border-green-400'
+                      : 'border-gray-600 bg-gray-800/50 hover:border-gray-500'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                      isActive
+                        ? 'bg-green-400 text-white'
+                        : hasError
+                        ? 'bg-red-400/20 text-red-400'
+                        : fileInfo
+                        ? 'bg-green-400/20 text-green-400'
+                        : 'bg-gray-600/20 text-gray-400'
+                    }`}>
+                      {getSectionIcon(section)}
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1 sm:gap-2">
+                        <h5 className="text-white font-semibold text-xs sm:text-sm truncate">{getSectionTitle(section)}</h5>
+                        {fileInfo && (
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            {fileInfo.isNew ? (
+                              <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
+                            ) : (
+                              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-400 rounded-full flex items-center justify-center">
+                                <span className="text-[8px] sm:text-xs text-white">📁</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {hasError && <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 text-red-400 flex-shrink-0" />}
+                      </div>
+                      <p className="text-gray-400 text-[10px] sm:text-xs mt-0.5">{getSectionDescription(section)}</p>
                       {fileInfo && (
-                        <div className="flex items-center gap-1">
-                          {fileInfo.isNew ? (
-                            <CheckCircle className="w-4 h-4 text-green-400" />
-                          ) : (
-                            <div className="w-4 h-4 bg-blue-400 rounded-full flex items-center justify-center">
-                              <span className="text-xs text-white">📁</span>
-                            </div>
-                          )}
+                        <div className="mt-1 space-y-0.5">
+                          <p className="text-white text-[10px] sm:text-xs font-medium truncate">{fileInfo.name}</p>
+                          <p className="text-gray-400 text-[10px] sm:text-xs">{fileInfo.size}</p>
                         </div>
                       )}
-                      {hasError && <AlertCircle className="w-4 h-4 text-red-400" />}
                     </div>
-                    <p className="text-gray-400 text-xs">{getSectionDescription(section)}</p>
-                    {fileInfo && (
-                      <div className="mt-1 space-y-1">
-                        <p className="text-white text-xs font-medium truncate">{fileInfo.name}</p>
-                        <p className="text-gray-400 text-xs">{fileInfo.size}</p>
-                      </div>
-                    )}
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
 
       {/* File Requirements */}
-      <div className="bg-gray-800 rounded-lg p-4 border-2 border-gray-700">
-        <h4 className="text-white font-bold mb-3">File Requirements</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Music className="w-4 h-4 text-green-400" />
-              <span className="text-white font-medium">Audio Files</span>
+      <div className="bg-gray-800 rounded-lg p-3 sm:p-4 border-2 border-gray-700">
+        <h4 className="text-white font-bold mb-2 sm:mb-3 text-sm sm:text-base">File Requirements</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
+          <div className="space-y-1 sm:space-y-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Music className="w-3 h-3 sm:w-4 sm:h-4 text-green-400 flex-shrink-0" />
+              <span className="text-white font-medium text-xs sm:text-sm">Audio Files</span>
             </div>
-            <ul className="text-gray-400 space-y-1 ml-6">
+            <ul className="text-gray-400 space-y-0.5 sm:space-y-1 ml-5 sm:ml-6">
               <li>• MP3: Optional, max {APP_CONFIG.FILE_LIMITS.MAX_FILE_SIZE_MB}MB</li>
               <li>• WAV: Optional, max {APP_CONFIG.FILE_LIMITS.MAX_FILE_SIZE_MB}MB</li>
               <li>• <span className="text-green-400 font-bold">At least one audio file required</span></li>
             </ul>
           </div>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Archive className="w-4 h-4 text-blue-400" />
-              <span className="text-white font-medium">Other Files</span>
+          <div className="space-y-1 sm:space-y-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Archive className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400 flex-shrink-0" />
+              <span className="text-white font-medium text-xs sm:text-sm">Other Files</span>
             </div>
-            <ul className="text-gray-400 space-y-1 ml-6">
+            <ul className="text-gray-400 space-y-0.5 sm:space-y-1 ml-5 sm:ml-6">
               <li>• Stems: Optional, ZIP/RAR format</li>
               <li>• Cover Image: Required, JPG/PNG/WebP</li>
               <li>• <span className="text-blue-400 font-bold">📁 = Existing, ✓ = New</span></li>
