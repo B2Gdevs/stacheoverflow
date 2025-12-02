@@ -11,6 +11,7 @@ import { Loader2, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getIconSize } from '@/lib/utils/icon-sizes';
 import { PromoCodeModal } from '@/components/dashboard/promo/promo-code-modal';
+import { ImpersonationBanner } from '@/components/admin/impersonation-banner';
 import { useSearchParams } from 'next/navigation';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -154,6 +155,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </Button>
           </div>
         </header>
+
+        {/* Impersonation Banner */}
+        <ImpersonationBanner />
 
         {/* Promo Code Modal */}
         <PromoCodeModal 

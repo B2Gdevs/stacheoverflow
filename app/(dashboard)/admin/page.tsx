@@ -126,6 +126,14 @@ export default function AdminDashboard() {
       color: 'green' as const,
       enabled: subscriptionsEnabled,
     },
+    {
+      title: 'Impersonate User',
+      description: 'Impersonate users for testing and switch between dev/prod data',
+      icon: UserCog,
+      href: '/admin/impersonate',
+      color: 'orange' as const,
+      enabled: true, // Always enabled
+    },
   ];
 
   return (

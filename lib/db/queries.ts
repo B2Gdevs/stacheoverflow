@@ -3,9 +3,17 @@ import { db } from './drizzle';
 import { activityLogs, teamMembers, teams, users } from './schema';
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/auth/session';
+import { getImpersonatedUser } from './impersonation';
 
 export async function getUser() {
-  const sessionCookie = (await cookies()).get('session');
+  // Check for impersonation first
+  const impersonatedUser = await getImpersonatedUser();
+  if (impersonatedUser) {
+    return impersonatedUser;
+  }
+
+  // Normal session check
+  const sessionCookie = cookieStore.get('session');
   if (!sessionCookie || !sessionCookie.value) {
     return null;
   }
