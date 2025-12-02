@@ -25,33 +25,46 @@ export function UploadFilesStep() {
     };
   }, [imagePreviewUrl]);
 
-  // Fetch signed URL for existing images when image section is active
+  // Fetch signed URL for existing images immediately when component loads or image changes
   useEffect(() => {
     const fetchSignedUrl = async () => {
       const existingFile = beat.existingFiles?.image;
-      if (existingFile && !existingFile.startsWith('http') && activeSection === 'image') {
-        try {
-          const response = await fetch(`/api/files/signed-url?filePath=${encodeURIComponent(existingFile)}`);
-          if (response.ok) {
-            const data = await response.json();
-            setExistingImageUrl(data.signedUrl || data.url);
-          } else {
-            // Fallback to direct API route
-            setExistingImageUrl(`/api/files/${existingFile}`);
-          }
-        } catch (error) {
-          // Fallback to direct API route
-          setExistingImageUrl(`/api/files/${existingFile}`);
-        }
-      } else if (existingFile && existingFile.startsWith('http')) {
-        setExistingImageUrl(existingFile);
-      } else {
+      if (!existingFile) {
         setExistingImageUrl(null);
+        return;
+      }
+
+      // If it's already a full HTTP URL, use it directly
+      if (existingFile.startsWith('http')) {
+        setExistingImageUrl(existingFile);
+        return;
+      }
+
+      // Fetch signed URL for the existing image
+      try {
+        const response = await fetch(`/api/files/signed-url?filePath=${encodeURIComponent(existingFile)}`, {
+          credentials: 'include', // Include cookies for auth
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.signedUrl) {
+            setExistingImageUrl(data.signedUrl);
+            return;
+          }
+        }
+        
+        // If signed URL fails, try direct API route (will use cookies)
+        setExistingImageUrl(`/api/files/${existingFile}`);
+      } catch (error) {
+        console.error('Error fetching signed URL:', error);
+        // Fallback to direct API route
+        setExistingImageUrl(`/api/files/${existingFile}`);
       }
     };
 
     fetchSignedUrl();
-  }, [beat.existingFiles?.image, activeSection]);
+  }, [beat.existingFiles?.image]);
 
 
   const getFileInfo = (type: 'mp3' | 'wav' | 'stems' | 'image') => {
