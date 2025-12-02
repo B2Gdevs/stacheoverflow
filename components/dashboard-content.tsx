@@ -243,9 +243,9 @@ export function DashboardContent() {
               <div key={beat.id} className="group bg-black rounded-lg border-2 border-gray-700 hover:border-green-500 transition-all duration-200 hover:shadow-lg">
                 {/* Beat Image */}
                 <div className="relative aspect-square overflow-hidden rounded-t-lg bg-gray-900">
-                  {beat.imageFile ? (
+                  {getImageUrl(beat) ? (
                     <img 
-                      src={getImageUrl(beat) || ''} 
+                      src={getImageUrl(beat)} 
                       alt={beat.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"
@@ -350,9 +350,9 @@ export function DashboardContent() {
               <div key={`pack-${pack.id}`} className="group bg-black rounded-lg border-2 border-gray-700 hover:border-amber-500 transition-all duration-200 hover:shadow-lg">
                 {/* Pack Image */}
                 <div className="relative aspect-square overflow-hidden rounded-t-lg bg-gray-900">
-                  {pack.imageFile ? (
+                  {getImageUrl(pack) ? (
                     <img 
-                      src={getImageUrl(pack) || ''} 
+                      src={getImageUrl(pack)} 
                       alt={pack.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"
