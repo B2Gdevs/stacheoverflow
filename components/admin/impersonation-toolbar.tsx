@@ -89,88 +89,154 @@ export function ImpersonationToolbar() {
     }
   };
 
-  // Don't show if not impersonating
-  if (loading || !status?.isImpersonating) {
+  // Show in development mode even if not impersonating (for testing)
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  
+  // Don't show if not impersonating (unless in development)
+  if (loading) {
     return null;
   }
+  
+  if (!status?.isImpersonating && !isDevelopment) {
+    return null;
+  }
+
+  const isImpersonating = status?.isImpersonating || false;
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
       {isExpanded ? (
-        <div className="bg-yellow-500/95 backdrop-blur-sm border-2 border-yellow-400 rounded-lg shadow-2xl p-4 min-w-[280px] sm:min-w-[320px]">
+        <div className={cn(
+          "backdrop-blur-sm border-2 rounded-lg shadow-2xl p-4 min-w-[280px] sm:min-w-[320px]",
+          isImpersonating 
+            ? "bg-yellow-500/95 border-yellow-400" 
+            : "bg-blue-500/95 border-blue-400"
+        )}>
           <div className="flex items-start justify-between gap-3 mb-3">
             <div className="flex items-center gap-2 flex-1 min-w-0">
-              <User className={cn(getIconSize('md'), "text-yellow-900 flex-shrink-0")} />
+              <User className={cn(
+                getIconSize('md'),
+                "flex-shrink-0",
+                isImpersonating ? "text-yellow-900" : "text-blue-900"
+              )} />
               <div className="flex-1 min-w-0">
-                <p className="text-yellow-900 font-bold text-sm truncate">
-                  Impersonating User
+                <p className={cn(
+                  "font-bold text-sm truncate",
+                  isImpersonating ? "text-yellow-900" : "text-blue-900"
+                )}>
+                  {isImpersonating ? 'Impersonating User' : 'Impersonation Tool'}
                 </p>
-                <p className="text-yellow-800 text-xs truncate mt-0.5">
-                  {status.user?.email}
-                </p>
+                {isImpersonating && status.user?.email ? (
+                  <p className={cn(
+                    "text-xs truncate mt-0.5",
+                    isImpersonating ? "text-yellow-800" : "text-blue-800"
+                  )}>
+                    {status.user.email}
+                  </p>
+                ) : (
+                  <p className={cn(
+                    "text-xs truncate mt-0.5",
+                    isImpersonating ? "text-yellow-800" : "text-blue-800"
+                  )}>
+                    Not impersonating
+                  </p>
+                )}
               </div>
             </div>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setIsExpanded(false)}
-              className="h-6 w-6 text-yellow-900 hover:bg-yellow-400 flex-shrink-0"
+              className={cn(
+                "h-6 w-6 flex-shrink-0",
+                isImpersonating 
+                  ? "text-yellow-900 hover:bg-yellow-400" 
+                  : "text-blue-900 hover:bg-blue-400"
+              )}
             >
               <X className={getIconSize('sm')} />
             </Button>
           </div>
 
-          <div className="space-y-2 mb-3">
-            <div className="flex items-center gap-2 text-xs">
-              <Database className={cn(getIconSize('sm'), "text-yellow-800")} />
-              <span className="text-yellow-800">
-                Environment: <span className="font-bold">{status.environment || 'prod'}</span>
-              </span>
-            </div>
-            {status.user?.name && (
+          {isImpersonating && (
+            <div className="space-y-2 mb-3">
               <div className="flex items-center gap-2 text-xs">
-                <User className={cn(getIconSize('sm'), "text-yellow-800")} />
-                <span className="text-yellow-800 truncate">{status.user.name}</span>
+                <Database className={cn(
+                  getIconSize('sm'),
+                  isImpersonating ? "text-yellow-800" : "text-blue-800"
+                )} />
+                <span className={isImpersonating ? "text-yellow-800" : "text-blue-800"}>
+                  Environment: <span className="font-bold">{status.environment || 'prod'}</span>
+                </span>
               </div>
-            )}
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-yellow-800">
-                Role: <span className="font-medium">{status.user?.role}</span>
-              </span>
+              {status.user?.name && (
+                <div className="flex items-center gap-2 text-xs">
+                  <User className={cn(
+                    getIconSize('sm'),
+                    isImpersonating ? "text-yellow-800" : "text-blue-800"
+                  )} />
+                  <span className={cn(
+                    "truncate",
+                    isImpersonating ? "text-yellow-800" : "text-blue-800"
+                  )}>
+                    {status.user.name}
+                  </span>
+                </div>
+              )}
+              <div className="flex items-center gap-2 text-xs">
+                <span className={isImpersonating ? "text-yellow-800" : "text-blue-800"}>
+                  Role: <span className="font-medium">{status.user?.role}</span>
+                </span>
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => router.push('/admin/impersonate')}
-              className="flex-1 border-yellow-700 text-yellow-900 hover:bg-yellow-400 text-xs min-h-[36px] sm:min-h-0"
+              className={cn(
+                "flex-1 text-xs min-h-[36px] sm:min-h-0",
+                isImpersonating
+                  ? "border-yellow-700 text-yellow-900 hover:bg-yellow-400"
+                  : "border-blue-700 text-blue-900 hover:bg-blue-400"
+              )}
             >
               <Settings className={cn(getIconSize('sm'), "mr-1")} />
               Manage
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={stopImpersonation}
-              disabled={stopping}
-              className="flex-1 border-yellow-700 text-yellow-900 hover:bg-yellow-400 text-xs min-h-[36px] sm:min-h-0"
-            >
-              {stopping ? (
-                <Loader2 className={cn(getIconSize('sm'), "mr-1 animate-spin")} />
-              ) : (
-                <X className={cn(getIconSize('sm'), "mr-1")} />
-              )}
-              Stop
-            </Button>
+            {isImpersonating && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={stopImpersonation}
+                disabled={stopping}
+                className={cn(
+                  "flex-1 text-xs min-h-[36px] sm:min-h-0",
+                  "border-yellow-700 text-yellow-900 hover:bg-yellow-400"
+                )}
+              >
+                {stopping ? (
+                  <Loader2 className={cn(getIconSize('sm'), "mr-1 animate-spin")} />
+                ) : (
+                  <X className={cn(getIconSize('sm'), "mr-1")} />
+                )}
+                Stop
+              </Button>
+            )}
           </div>
         </div>
       ) : (
         <Button
           onClick={() => setIsExpanded(true)}
-          className="bg-yellow-500 hover:bg-yellow-600 text-yellow-900 rounded-full shadow-lg min-h-[56px] min-w-[56px] p-0"
-          title="Impersonation Active"
+          className={cn(
+            "rounded-full shadow-lg min-h-[56px] min-w-[56px] p-0",
+            isImpersonating
+              ? "bg-yellow-500 hover:bg-yellow-600 text-yellow-900"
+              : "bg-blue-500 hover:bg-blue-600 text-blue-900"
+          )}
+          title={isImpersonating ? "Impersonation Active" : "Impersonation Tool"}
         >
           <User className={getIconSize('lg')} />
         </Button>
