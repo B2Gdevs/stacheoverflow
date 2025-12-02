@@ -51,8 +51,36 @@ export async function getUser() {
 /**
  * Get the real authenticated user, bypassing impersonation
  * Use this when you need to verify the actual admin (e.g., in impersonation endpoints)
+ * Supports both Supabase OAuth and legacy session cookies
  */
 export async function getRealUser() {
+  // Try Supabase session first (for OAuth users)
+  try {
+    const { createClient } = await import('@/utils/supabase/server');
+    const supabase = await createClient();
+    const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+    
+    if (supabaseUser?.email) {
+      const { sql } = await import('drizzle-orm');
+      const normalizedEmail = supabaseUser.email.toLowerCase().trim();
+      const [dbUser] = await db
+        .select()
+        .from(users)
+        .where(
+          and(
+            sql`LOWER(${users.email}) = ${normalizedEmail}`,
+            isNull(users.deletedAt)
+          )
+        )
+        .limit(1);
+      
+      if (dbUser) return dbUser;
+    }
+  } catch (error) {
+    // Continue to legacy session check
+  }
+  
+  // Fall back to legacy session cookie (for email/password users)
   // Skip impersonation check - get the actual authenticated user
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get('session');
