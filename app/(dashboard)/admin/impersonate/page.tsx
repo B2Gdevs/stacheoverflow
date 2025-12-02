@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Search, User, X, AlertCircle, Loader2, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,11 +32,40 @@ export default function ImpersonatePage() {
   const [impersonationStatus, setImpersonationStatus] = useState<ImpersonationStatus | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(true);
   const [selectedEnvironment, setSelectedEnvironment] = useState<'dev' | 'prod'>('prod');
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Check impersonation status on mount
   useEffect(() => {
     checkImpersonationStatus();
   }, []);
+
+  // Auto-search when searchTerm changes (debounced)
+  useEffect(() => {
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    const trimmedTerm = searchTerm.trim();
+    
+    if (trimmedTerm.length >= 2) {
+      // Debounce search by 500ms
+      searchTimeoutRef.current = setTimeout(() => {
+        console.log('🔍 Frontend: Auto-search triggered for:', trimmedTerm);
+        searchUsers();
+      }, 500);
+    } else if (trimmedTerm.length === 0) {
+      // Clear results if search is empty
+      setUsers([]);
+    }
+
+    // Cleanup timeout on unmount or when searchTerm changes
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchTerm]);
 
   const checkImpersonationStatus = async () => {
     setLoadingStatus(true);
@@ -325,16 +354,8 @@ export default function ImpersonatePage() {
                   value={searchTerm}
                   onChange={(e) => {
                     const value = e.target.value;
+                    console.log('🔍 Frontend: Input changed to:', value);
                     setSearchTerm(value);
-                    // Auto-search as user types (debounced)
-                    if (value.trim().length >= 2) {
-                      const timeoutId = setTimeout(() => {
-                        searchUsers();
-                      }, 500);
-                      return () => clearTimeout(timeoutId);
-                    } else {
-                      setUsers([]);
-                    }
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
