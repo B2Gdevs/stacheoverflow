@@ -458,3 +458,16 @@ export const featureFlags = pgTable('feature_flags', {
 
 export type FeatureFlag = typeof featureFlags.$inferSelect;
 export type NewFeatureFlag = typeof featureFlags.$inferInsert;
+
+// Site Settings (for storing site-wide configuration like banner positions)
+export const siteSettings = pgTable('site_settings', {
+  id: serial('id').primaryKey(),
+  settingKey: varchar('setting_key', { length: 100 }).notNull().unique(),
+  settingValue: text('setting_value').notNull(), // JSON string
+  description: text('description'),
+  updatedBy: integer('updated_by').references(() => users.id),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export type SiteSetting = typeof siteSettings.$inferSelect;
+export type NewSiteSetting = typeof siteSettings.$inferInsert;

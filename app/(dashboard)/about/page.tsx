@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Music, ExternalLink, Headphones, Share2, Sparkles, Radio, Move, X } from 'lucide-react';
+import { Music, ExternalLink, Headphones, Share2, Sparkles, Radio } from 'lucide-react';
 import Image from 'next/image';
 
 // Social Icon Components
@@ -37,83 +36,7 @@ const TikTokIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const SETTING_KEY = 'about-banner-position';
-
-interface ImagePosition {
-  x: number; // percentage (0-100)
-  y: number; // percentage (0-100)
-}
-
 export default function AboutPage() {
-  const [isDev, setIsDev] = useState(false);
-  const [showPositionTool, setShowPositionTool] = useState(false);
-  const [position, setPosition] = useState<ImagePosition>({ x: 0, y: 50 });
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // Check if we're in dev mode (client-side check)
-  useEffect(() => {
-    const checkDev = () => {
-      // Check multiple ways to determine dev mode
-      const isLocalhost = typeof window !== 'undefined' && 
-        (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-      const isDevEnv = process.env.NODE_ENV === 'development';
-      setIsDev(isLocalhost || isDevEnv);
-    };
-    checkDev();
-  }, []);
-
-  // Load saved position from server
-  useEffect(() => {
-    const loadPosition = async () => {
-      try {
-        const response = await fetch(`/api/site-settings?key=${SETTING_KEY}`, {
-          credentials: 'include', // Important: include cookies for auth
-        });
-        const data = await response.json();
-        
-        if (data.value && typeof data.value === 'object') {
-          setPosition(data.value);
-        }
-      } catch (error) {
-        console.error('Failed to load banner position:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    loadPosition();
-  }, []);
-
-  // Save position to server (dev mode only)
-  const savePosition = async (newPosition: ImagePosition) => {
-    setPosition(newPosition);
-    
-    if (isDev) {
-      try {
-        const response = await fetch('/api/site-settings', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include', // Important: include cookies for auth
-          body: JSON.stringify({
-            key: SETTING_KEY,
-            value: newPosition,
-            description: 'Banner image position for about page',
-          }),
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          console.error('Failed to save position:', error);
-        }
-      } catch (error) {
-        console.error('Error saving position:', error);
-      }
-    }
-  };
-
-  const objectPosition = `${position.x}% ${position.y}%`;
   const streamingPlatforms = [
     {
       name: 'Spotify',
@@ -152,94 +75,6 @@ export default function AboutPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black">
-      {/* Dev-only Position Tool */}
-      {isDev && (
-        <>
-          <Button
-            onClick={() => setShowPositionTool(!showPositionTool)}
-            className="fixed top-20 right-4 z-50 bg-yellow-500 hover:bg-yellow-600 text-black shadow-lg"
-            size="sm"
-          >
-            <Move className="h-4 w-4 mr-2" />
-            Position Image
-          </Button>
-          
-          {showPositionTool && (
-            <Card className="fixed top-32 right-4 z-50 w-80 bg-gray-900 border-2 border-yellow-500 shadow-2xl">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-white text-lg">Image Position (Dev Only)</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowPositionTool(false)}
-                  className="h-6 w-6 p-0 text-gray-400 hover:text-white"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <label className="text-sm text-gray-300 mb-2 block">
-                    Horizontal (X): {position.x}%
-                  </label>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={position.x}
-                    onChange={(e) => savePosition({ ...position, x: parseInt(e.target.value) })}
-                    className="w-full"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm text-gray-300 mb-2 block">
-                    Vertical (Y): {position.y}%
-                  </label>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={position.y}
-                    onChange={(e) => savePosition({ ...position, y: parseInt(e.target.value) })}
-                    className="w-full"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => {
-                      const reset = { x: 0, y: 50 };
-                      setPosition(reset);
-                      savePosition(reset);
-                    }}
-                    variant="outline"
-                    size="sm"
-                    className="flex-1 text-xs"
-                  >
-                    Reset
-                  </Button>
-                  <Button
-                    onClick={async () => {
-                      setPosition({ x: 0, y: 50 });
-                      if (isDev) {
-                        await savePosition({ x: 0, y: 50 });
-                      }
-                    }}
-                    variant="outline"
-                    size="sm"
-                    className="flex-1 text-xs"
-                  >
-                    Reset & Save
-                  </Button>
-                </div>
-                <p className="text-xs text-gray-500">
-                  Position: {objectPosition}
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </>
-      )}
-
       {/* Hero Section with Banner */}
       <div className="relative w-full mb-8 overflow-hidden">
         <div className="relative h-64 md:h-80 lg:h-96 w-full">
@@ -248,7 +83,6 @@ export default function AboutPage() {
             alt="StachO Artist Banner"
             fill
             className="object-cover"
-            style={{ objectPosition }}
             priority
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
