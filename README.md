@@ -130,6 +130,15 @@ node scripts/setup-supabase-storage.js
 **Avatar images return 400 Bad Request:**
 Run the SQL in `scripts/setup-avatars-policy.sql` in Supabase SQL Editor.
 
+### Creating GitHub Issues
+
+To create GitHub issues for documented problems:
+```bash
+# Get a GitHub token from: https://github.com/settings/tokens
+# Make sure it has "repo" scope
+GITHUB_TOKEN=your_token node scripts/create-github-issues.js
+```
+
 For more details, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) or check [.github/ISSUES.md](.github/ISSUES.md) for known issues.
 
 ## Other Templates
