@@ -108,6 +108,30 @@ In your Vercel project settings (or during deployment), add all the necessary en
 4. `POSTGRES_URL`: Set this to your production database URL.
 5. `AUTH_SECRET`: Set this to a random string. `openssl rand -base64 32` will generate one.
 
+## Troubleshooting
+
+If you encounter issues, check our comprehensive troubleshooting guide:
+
+📖 **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)**
+
+### Common Issues
+
+- **Avatar upload fails**: See [Avatar Upload Issues](docs/TROUBLESHOOTING.md#avatar-upload-issues)
+- **Storage bucket errors**: See [Storage Bucket Configuration](docs/TROUBLESHOOTING.md#storage-bucket-configuration)
+- **Authentication problems**: See [Authentication Issues](docs/TROUBLESHOOTING.md#authentication-issues)
+
+### Quick Fixes
+
+**Avatar upload "Bucket not found":**
+```bash
+node scripts/setup-supabase-storage.js
+```
+
+**Avatar images return 400 Bad Request:**
+Run the SQL in `scripts/setup-avatars-policy.sql` in Supabase SQL Editor.
+
+For more details, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) or check [.github/ISSUES.md](.github/ISSUES.md) for known issues.
+
 ## Other Templates
 
 While this template is intentionally minimal and to be used as a learning resource, there are other paid versions in the community which are more full-featured:
