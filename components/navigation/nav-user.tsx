@@ -40,6 +40,7 @@ import useSWR, { mutate } from "swr"
 import { User } from "@/lib/db/schema"
 import { supabase } from "@/lib/supabase"
 import { fetcher, CACHE_KEYS } from "@/lib/swr/config"
+import { useFeatureFlag } from "@/lib/swr/hooks"
 
 export function NavUser({
   user,
@@ -54,6 +55,8 @@ export function NavUser({
   const router = useRouter()
   const [supabaseUser, setSupabaseUser] = useState<any>(null);
   const { data: currentUser, error, mutate: mutateUser } = useSWR<User>(CACHE_KEYS.USER, fetcher)
+  const { enabled: billingEnabled } = useFeatureFlag('BILLING_ENABLED');
+  const { enabled: notificationsEnabled } = useFeatureFlag('NOTIFICATIONS_ENABLED');
 
   // Check Supabase session on client side
   useEffect(() => {
@@ -188,18 +191,22 @@ export function NavUser({
             ) : (
               <>
                 <DropdownMenuGroup>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/account')}>
                     <BadgeCheck />
                     Account
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <CreditCard />
-                    Billing
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Bell />
-                    Notifications
-                  </DropdownMenuItem>
+                  {billingEnabled && (
+                    <DropdownMenuItem>
+                      <CreditCard />
+                      Billing
+                    </DropdownMenuItem>
+                  )}
+                  {notificationsEnabled && (
+                    <DropdownMenuItem>
+                      <Bell />
+                      Notifications
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <form action={handleSignOut} className="w-full">

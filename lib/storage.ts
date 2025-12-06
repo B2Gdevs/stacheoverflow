@@ -7,6 +7,7 @@ import { APP_CONFIG, FileSizeUtils } from './constants';
 export const STORAGE_BUCKETS = {
   AUDIO: APP_CONFIG.STORAGE.BUCKETS.AUDIO,
   IMAGES: APP_CONFIG.STORAGE.BUCKETS.IMAGES,
+  AVATARS: APP_CONFIG.STORAGE.BUCKETS.AVATARS,
 } as const;
 
 // Check if Supabase is configured
@@ -95,15 +96,16 @@ async function ensureDirectoryExists(filePath: string): Promise<void> {
   }
 }
 
-// Upload file (Supabase or local fallback)
-export async function uploadFile(
+// Upload file to a specific bucket (Supabase or local fallback)
+export async function uploadFileToBucket(
   file: Buffer, 
   fileName: string, 
-  contentType: string
+  contentType: string,
+  bucketName?: string
 ): Promise<StorageResult> {
-  const bucket = contentType.startsWith('image/') 
+  const bucket = bucketName || (contentType.startsWith('image/') 
     ? STORAGE_BUCKETS.IMAGES 
-    : STORAGE_BUCKETS.AUDIO;
+    : STORAGE_BUCKETS.AUDIO);
 
   // Generate unique filename to avoid conflicts
   const uniqueFileName = generateUniqueFileName(fileName);
@@ -123,13 +125,35 @@ export async function uploadFile(
         });
 
       if (error) {
+        console.error('❌ Supabase upload error:', error);
         throw error;
+      }
+
+      if (!data || !data.path) {
+        console.error('❌ Supabase upload returned no data or path');
+        throw new Error('Upload returned no data');
+      }
+
+      // Get public URL - data.path is just the filename, not including bucket
+      const publicUrlResult = supabase.storage.from(bucket).getPublicUrl(data.path);
+      const publicUrl = publicUrlResult.data.publicUrl;
+
+      console.log('✅ Supabase upload successful:', {
+        bucket,
+        path: data.path,
+        publicUrl,
+        fullPath: `${bucket}/${data.path}`,
+      });
+
+      // Warn if using a private bucket (avatars should be public)
+      if (bucket === STORAGE_BUCKETS.AVATARS) {
+        console.log('ℹ️ Using avatars bucket - ensure it is set to public in Supabase');
       }
 
       return {
         success: true,
         fileName: `${bucket}/${data.path}`,
-        publicUrl: supabase.storage.from(bucket).getPublicUrl(data.path).data.publicUrl
+        publicUrl
       };
     } catch (error) {
       console.error('Supabase upload failed, falling back to local storage:', error);
@@ -161,6 +185,15 @@ export async function uploadFile(
       error: `Upload failed: ${error}`
     };
   }
+}
+
+// Upload file (Supabase or local fallback) - uses default bucket selection
+export async function uploadFile(
+  file: Buffer, 
+  fileName: string, 
+  contentType: string
+): Promise<StorageResult> {
+  return uploadFileToBucket(file, fileName, contentType);
 }
 
 // Download file (Supabase or local fallback)

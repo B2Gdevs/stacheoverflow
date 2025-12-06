@@ -56,6 +56,7 @@ export const APP_CONFIG = {
     BUCKETS: {
       AUDIO: 'audio-files',
       IMAGES: 'cover-images',
+      AVATARS: 'avatars', // Public bucket for user profile pictures
     },
   },
 } as const;

@@ -6,7 +6,6 @@ import { users, socialConnections } from '@/lib/db/schema';
 import { eq, isNull, and, sql } from 'drizzle-orm';
 import { withCache } from '@/lib/cache/cache-middleware';
 import { cacheInvalidation } from '@/lib/cache/api-cache';
-import { getImpersonatedUser } from '@/lib/db/impersonation';
 
 export async function GET(request: NextRequest) {
   // Get user ID for cache key (user-specific caching)
@@ -35,12 +34,6 @@ export async function GET(request: NextRequest) {
   }
   
   return withCache(request, async () => {
-    // Check for impersonation first (takes priority)
-    const impersonatedUser = await getImpersonatedUser();
-    if (impersonatedUser) {
-      return NextResponse.json(impersonatedUser);
-    }
-
     // First try to get user from Supabase session
     try {
       const supabase = await createClient();
@@ -137,6 +130,7 @@ export async function GET(request: NextRequest) {
           role: dbUser.role,
           name: dbUser.name,
           supabaseAuthUserId: dbUser.supabaseAuthUserId,
+          avatarUrl: dbUser.avatarUrl,
         });
         return NextResponse.json(dbUser);
       }
